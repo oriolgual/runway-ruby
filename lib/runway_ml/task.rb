@@ -2,6 +2,9 @@
 
 module RunwayML
   class Task
+    POLL_TIME = 6
+    POLL_JITTER = 3
+
     attr_reader :id, :status, :created_at, :progress, :failure, :failure_code, :output, :data
 
     def initialize(id:, client: nil, data: nil)
@@ -25,6 +28,29 @@ module RunwayML
       true
     rescue NotFoundError
       false
+    end
+
+    def wait_for_output(timeout: 60 * 10)
+      ensure_client!
+
+      start_time = Time.now.to_f
+
+      loop do
+        retrieve
+
+        case status
+        when "SUCCEEDED"
+          return self
+        when "FAILED", "CANCELLED"
+          raise TaskFailedError.new(self)
+        end
+
+        if !timeout.nil? && (Time.now.to_f - start_time) > timeout
+          raise TaskTimeoutError.new(self)
+        end
+
+        sleep(POLL_TIME + (rand * POLL_JITTER) - (POLL_JITTER / 2.0))
+      end
     end
 
     def ==(other)

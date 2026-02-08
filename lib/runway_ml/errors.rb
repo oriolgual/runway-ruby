@@ -158,4 +158,22 @@ module RunwayML
       "Validation failed:\n" + errors.map { |field, message| "  - #{field}: #{message}" }.join("\n")
     end
   end
+
+  class TaskFailedError < Error
+    attr_reader :task
+
+    def initialize(task)
+      @task = task
+      super("Task failed")
+    end
+  end
+
+  class TaskTimeoutError < Error
+    attr_reader :task
+
+    def initialize(task)
+      @task = task
+      super("Task timed out")
+    end
+  end
 end

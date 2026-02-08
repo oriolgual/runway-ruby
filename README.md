@@ -47,6 +47,11 @@ begin
 
   puts "Task created with ID: #{task.id}"
   # => Task created with ID: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+
+  # Wait for the task to finish (polls the API and updates the task attributes)
+  task.wait_for_output
+  task.status # => "SUCCEEDED"
+  task.output # => ["https://..."]
 rescue RunwayML::ValidationError => e
   puts "Validation failed: #{e.message}"
 rescue RunwayML::Error => e
@@ -103,6 +108,11 @@ task.to_s  # => "#<RunwayML::Task id=497f6eca-6276-4993-bfeb-53cbbbba6f08>"
 task.retrieve
 task.status     # => "PENDING"
 task.created_at # => "2024-06-27T19:49:32.334Z"
+
+# Wait for task completion (updates task attributes)
+task.wait_for_output
+task.status # => "SUCCEEDED"
+task.output # => ["https://..."]
 
 # Status-specific fields
 task.progress     # => 0.42 (RUNNING)
