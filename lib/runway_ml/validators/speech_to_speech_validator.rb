@@ -5,16 +5,6 @@ require_relative "base_validators"
 module RunwayML
   module Validators
     class SpeechToSpeechValidator
-      VALID_MEDIA_TYPES = [ "audio", "video" ].freeze
-      VALID_VOICE_TYPES = [ "runway-preset" ].freeze
-      VALID_PRESET_IDS = [
-        "Maya", "Arjun", "Serene", "Bernard", "Billy", "Mark", "Clint", "Mabel", "Chad", "Leslie",
-        "Eleanor", "Elias", "Elliot", "Grungle", "Brodie", "Sandra", "Kirk", "Kylie", "Lara", "Lisa",
-        "Malachi", "Marlene", "Martin", "Miriam", "Monster", "Paula", "Pip", "Rusty", "Ragnar", "Xylar",
-        "Maggie", "Jack", "Katie", "Noah", "James", "Rina", "Ella", "Mariah", "Frank", "Claudia",
-        "Niki", "Vincent", "Kendrick", "Myrna", "Tom", "Wanda", "Benjamin", "Kiana", "Rachel"
-      ].freeze
-
       def validate(media:, voice:, remove_background_noise:)
         errors = {}
 
@@ -41,8 +31,8 @@ module RunwayML
         media_type = media[:type]
         media_uri = media[:uri]
 
-        unless VALID_MEDIA_TYPES.include?(media_type)
-          errors[:media] = "type must be one of: #{VALID_MEDIA_TYPES.join(', ')}"
+        unless SpeechToSpeech::VALID_MEDIA_TYPES.include?(media_type)
+          errors[:media] = "type must be one of: #{SpeechToSpeech::VALID_MEDIA_TYPES.join(', ')}"
         end
 
         if media_uri.nil? || media_uri.empty?
@@ -64,12 +54,12 @@ module RunwayML
         voice_type = voice[:type]
         preset_id = voice[:presetId]
 
-        unless VALID_VOICE_TYPES.include?(voice_type)
-          errors[:voice] = "type must be one of: #{VALID_VOICE_TYPES.join(', ')}"
+        unless SpeechToSpeech::VALID_VOICE_TYPES.include?(voice_type)
+          errors[:voice] = "type must be one of: #{SpeechToSpeech::VALID_VOICE_TYPES.join(', ')}"
         end
 
-        unless VALID_PRESET_IDS.include?(preset_id)
-          errors[:voice] = "presetId must be one of: #{VALID_PRESET_IDS.join(', ')}" if errors[:voice].nil?
+        unless SpeechToSpeech::VALID_PRESET_IDS.include?(preset_id)
+          errors[:voice] = "presetId must be one of: #{SpeechToSpeech::VALID_PRESET_IDS.join(', ')}" if errors[:voice].nil?
         end
       end
 
