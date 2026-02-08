@@ -159,6 +159,43 @@ task = RunwayML.character_performance(
 - `seed` - Optional. Random seed for reproducibility (0-4294967295)
 - `public_figure_threshold` - Optional. Content moderation threshold: `'auto'` or `'low'`
 
+### Sound Effect Generation
+
+Generate sound effects from text descriptions:
+
+```ruby
+require 'runway_ml'
+
+# Create a new sound effect task
+begin
+  task = RunwayML.sound_effect(
+    model: 'eleven_text_to_sound_v2',
+    prompt_text: 'A thunderstorm with heavy rain',
+    duration: 10,
+    loop: true
+  )
+
+  puts "Task created with ID: #{task.id}"
+  # => Task created with ID: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+
+  # Wait for the task to finish
+  task.wait_for_output
+  task.status # => "SUCCEEDED"
+  task.output # => ["https://..."]
+rescue RunwayML::ValidationError => e
+  puts "Validation failed: #{e.message}"
+rescue RunwayML::Error => e
+  puts "Error: #{e.message}"
+end
+```
+
+**Sound Effect Parameters:**
+
+- `model` - Required. Must be `'eleven_text_to_sound_v2'`
+- `prompt_text` - Required. A text description of the sound effect (1-3000 characters)
+- `duration` - Optional. The duration of the sound effect in seconds (0.5-30). If not provided, the duration will be determined automatically based on the text description
+- `loop` - Optional. Whether the output sound effect should be designed to loop seamlessly (default: false)
+
 ### Task Object
 
 The `RunwayML::Task` object represents a video generation task:
@@ -265,7 +302,7 @@ task = RunwayML.image_to_video(
 
 ### Supported Models
 
-The gem supports the following AI models for video generation and character control:
+The gem supports the following AI models for video generation, character control, and sound effect generation:
 
 - `gen4_turbo` - Fast generation with flexible parameters (Image-to-Video)
 - `veo3.1` - High-quality with audio support and optional end frames (Image/Text-to-Video)
@@ -273,6 +310,7 @@ The gem supports the following AI models for video generation and character cont
 - `gen3a_turbo` - Alternative model with different aspect ratios (Image-to-Video)
 - `veo3` - Stable model with 8-second duration (Image/Text-to-Video)
 - `act_two` - Character performance control (Character Performance)
+- `eleven_text_to_sound_v2` - Sound effect generation from text (Sound Effects)
 
 Each model has different capabilities, supported ratios, and parameters. Refer to the [RunwayML API documentation](https://docs.dev.runwayml.com/api) for model-specific requirements.
 
