@@ -172,5 +172,146 @@ module RunwayML
         end
       end
     end
+
+    class VideoUriValidator
+      VALID_CONTENT_TYPES = [ "video/mp4", "video/quicktime", "video/x-matroska", "video/webm", "video/3gpp", "video/ogg", "video/x-msvideo", "video/x-flv", "video/mpeg" ].freeze
+
+      def validate(uri, errors, field: :video, max_data_uri_size: 16777216)
+        return unless uri.is_a?(String)
+
+        if uri.length < 13
+          errors[field] = "URI must be at least 13 characters"
+          return
+        end
+
+        if uri.start_with?("https://")
+          validate_https_url(uri, errors, field)
+        elsif uri.start_with?("runway://")
+          validate_runway_uri(uri, errors, field)
+        elsif uri.start_with?("data:video/")
+          validate_data_uri(uri, errors, field, max_data_uri_size)
+        else
+          errors[field] = "must be a valid HTTPS URL, Runway URI (runway://), or data URI (data:video/)"
+        end
+      end
+
+      private
+
+      def validate_https_url(uri, errors, field)
+        if uri.length > 2048
+          errors[field] = "HTTPS URL must be at most 2048 characters"
+        end
+      end
+
+      def validate_runway_uri(uri, errors, field)
+        if uri.length > 5000
+          errors[field] = "Runway URI must be at most 5000 characters"
+        end
+      end
+
+      def validate_data_uri(uri, errors, field, max_size)
+        if uri.length > max_size
+          errors[field] = "Data URI must be at most #{max_size} characters"
+          return
+        end
+
+        content_type_match = uri.match(/^data:(video\/[^;,]+)/)
+        return unless content_type_match
+
+        content_type = content_type_match[1]
+        errors[field] = "unsupported video type '#{content_type}'" unless VALID_CONTENT_TYPES.include?(content_type)
+      end
+    end
+
+    class BodyControlValidator
+      def validate(body_control, errors)
+        return if body_control.nil?
+
+        unless [ true, false ].include?(body_control)
+          errors[:body_control] = "must be true or false"
+        end
+      end
+    end
+
+    class ExpressionIntensityValidator
+      def initialize(range: 1..5)
+        @range = range
+      end
+
+      def validate(expression_intensity, errors)
+        return if expression_intensity.nil?
+
+        unless range.include?(expression_intensity)
+          errors[:expression_intensity] = "must be between #{range.min} and #{range.max}"
+        end
+      end
+
+      private
+
+      attr_reader :range
+    end
+
+    class CharacterValidator
+      def initialize
+        @video_uri_validator = VideoUriValidator.new
+      end
+
+      def validate(character, errors)
+        return if character.nil?
+
+        unless character.is_a?(Hash)
+          errors[:character] = "must be a Hash with 'type' and 'uri'"
+          return
+        end
+
+        type = character[:type]
+        uri = character[:uri]
+
+        unless [ "image", "video" ].include?(type)
+          errors[:character] = "type must be 'image' or 'video'"
+          return
+        end
+
+        if type == "image"
+          # Reuse ImageUriValidator for image validation
+          ImageUriValidator.new.validate(uri, errors, field: :character)
+        elsif type == "video"
+          @video_uri_validator.validate(uri, errors, field: :character)
+        end
+      end
+
+      private
+
+      attr_reader :video_uri_validator
+    end
+
+    class ReferenceVideoValidator
+      def initialize
+        @video_uri_validator = VideoUriValidator.new
+      end
+
+      def validate(reference, errors)
+        return if reference.nil?
+
+        unless reference.is_a?(Hash)
+          errors[:reference] = "must be a Hash with 'type' and 'uri'"
+          return
+        end
+
+        type = reference[:type]
+        uri = reference[:uri]
+
+        unless type == "video"
+          errors[:reference] = "type must be 'video'"
+          return
+        end
+
+        @video_uri_validator.validate(uri, errors, field: :reference)
+      end
+
+      private
+
+      attr_reader :video_uri_validator
+    end
   end
 end

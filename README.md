@@ -88,6 +88,77 @@ end
 
 The text-to-video method works similarly to image-to-video, but generates videos directly from text descriptions without requiring an input image. This is useful for creating videos from scratch based on creative prompts.
 
+### Character Performance
+
+Control a character's facial expressions and body movements using a reference video. Apply a performer's movements to a character image or video:
+
+```ruby
+require 'runway_ml'
+
+# Create a character performance task using an image character
+begin
+  task = RunwayML.character_performance(
+    model: 'act_two',
+    character: {
+      type: 'image',
+      uri: 'https://example.com/character.jpg'
+    },
+    reference: {
+      type: 'video',
+      uri: 'https://example.com/performance.mp4'
+    },
+    ratio: '1280:720'
+  )
+
+  puts "Task created with ID: #{task.id}"
+  # => Task created with ID: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+
+  # Wait for the task to finish
+  task.wait_for_output
+  task.status # => "SUCCEEDED"
+  task.output # => ["https://..."]
+rescue RunwayML::ValidationError => e
+  puts "Validation failed: #{e.message}"
+rescue RunwayML::Error => e
+  puts "Error: #{e.message}"
+end
+```
+
+You can also use a video as the character input instead of an image:
+
+```ruby
+task = RunwayML.character_performance(
+  model: 'act_two',
+  character: {
+    type: 'video',
+    uri: 'https://example.com/character_video.mp4'
+  },
+  reference: {
+    type: 'video',
+    uri: 'https://example.com/performance.mp4'
+  },
+  ratio: '1280:720',
+  body_control: true,  # Enable body movement in addition to facial expressions
+  expression_intensity: 3,  # 1-5 scale for expression intensity
+  seed: 12345
+)
+```
+
+**Character Performance Parameters:**
+
+- `model` - Required. Must be `'act_two'`
+- `character` - Required. An image or video of your character. Must contain a visually recognizable face
+  - `type`: Either `'image'` or `'video'`
+  - `uri`: HTTPS URL, Runway URI, or data URI
+- `reference` - Required. A video containing the performance to apply to the character (3-30 seconds)
+  - `type`: Must be `'video'`
+  - `uri`: HTTPS URL, Runway URI, or data URI
+- `ratio` - Required. Output resolution: `'1280:720'`, `'720:1280'`, `'960:960'`, `'1104:832'`, `'832:1104'`, or `'1584:672'`
+- `body_control` - Optional. Boolean to enable body movement (default: false)
+- `expression_intensity` - Optional. 1-5 scale for expression intensity (default: 3)
+- `seed` - Optional. Random seed for reproducibility (0-4294967295)
+- `public_figure_threshold` - Optional. Content moderation threshold: `'auto'` or `'low'`
+
 ### Task Object
 
 The `RunwayML::Task` object represents a video generation task:
@@ -194,15 +265,16 @@ task = RunwayML.image_to_video(
 
 ### Supported Models
 
-The gem supports the following AI models:
+The gem supports the following AI models for video generation and character control:
 
-- `gen4_turbo` - Fast generation with flexible parameters
-- `veo3.1` - High-quality with audio support and optional end frames
-- `veo3.1_fast` - Faster variant of Veo 3.1
-- `gen3a_turbo` - Alternative model with different aspect ratios
-- `veo3` - Stable model with 8-second duration
+- `gen4_turbo` - Fast generation with flexible parameters (Image-to-Video)
+- `veo3.1` - High-quality with audio support and optional end frames (Image/Text-to-Video)
+- `veo3.1_fast` - Faster variant of Veo 3.1 (Image/Text-to-Video)
+- `gen3a_turbo` - Alternative model with different aspect ratios (Image-to-Video)
+- `veo3` - Stable model with 8-second duration (Image/Text-to-Video)
+- `act_two` - Character performance control (Character Performance)
 
-Each model has different capabilities, supported ratios, and duration ranges. Refer to the [RunwayML API documentation](https://docs.dev.runwayml.com/api) for model-specific requirements.
+Each model has different capabilities, supported ratios, and parameters. Refer to the [RunwayML API documentation](https://docs.dev.runwayml.com/api) for model-specific requirements.
 
 ### Supported Image Formats
 
@@ -219,6 +291,7 @@ GIF images are not supported.
 The gem performs comprehensive client-side validation before making API calls:
 
 ```ruby
+# Example with Image-to-Video
 begin
   task = RunwayML.image_to_video(
     model: 'gen4_turbo',
@@ -237,6 +310,19 @@ rescue RunwayML::ValidationError => e
   # Access individual errors
   puts e.errors
   # => { prompt_text: "cannot be empty", ratio: "must be one of: ...", ... }
+end
+
+# Example with Character Performance
+begin
+  task = RunwayML.character_performance(
+    model: 'act_two',
+    character: { type: 'invalid', uri: 'image.jpg' },  # Invalid type
+    reference: { type: 'video', uri: 'https://example.com/performance.mp4' },
+    ratio: '999:999'  # Invalid: unsupported ratio
+  )
+rescue RunwayML::ValidationError => e
+  puts e.errors
+  # => { character: "...", ratio: "must be one of: ..." }
 end
 ```
 
