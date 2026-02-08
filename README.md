@@ -278,6 +278,68 @@ The gem supports the following audio formats for speech-to-speech conversion:
 - **M4A** (`.m4a`) - AAC or ALAC codec
 - **AAC** (`.aac`) - AAC (raw) codec
 
+### Text-to-Speech Generation
+
+Generate speech from text descriptions using various voice presets:
+
+```ruby
+require 'runway_ml'
+
+# Generate speech from text
+begin
+  task = RunwayML.text_to_speech(
+    model: 'eleven_multilingual_v2',
+    prompt_text: 'The quick brown fox jumps over the lazy dog',
+    voice: {
+      type: 'runway-preset',
+      presetId: 'Leslie'
+    }
+  )
+
+  puts "Task created with ID: #{task.id}"
+  # => Task created with ID: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+
+  # Wait for the task to finish
+  task.wait_for_output
+  task.status # => "SUCCEEDED"
+  task.output # => ["https://..."]
+rescue RunwayML::ValidationError => e
+  puts "Validation failed: #{e.message}"
+rescue RunwayML::Error => e
+  puts "Error: #{e.message}"
+end
+```
+
+You can also generate speech with different voices:
+
+```ruby
+# Generate speech with a different voice
+task = RunwayML.text_to_speech(
+  model: 'eleven_multilingual_v2',
+  prompt_text: 'Hello, this is a test of the text-to-speech system',
+  voice: {
+    type: 'runway-preset',
+    presetId: 'Noah'
+  }
+)
+
+task.wait_for_output
+task.status # => "SUCCEEDED"
+task.output # => ["https://..."]
+```
+
+**Text-to-Speech Parameters:**
+
+- `model` - Required. Must be `'eleven_multilingual_v2'`
+- `prompt_text` - Required. A text description of the speech to generate (1-1000 characters)
+- `voice` - Required. The voice preset to use for the generated speech
+  - `type`: Must be `'runway-preset'`
+  - `presetId`: One of the available voice IDs (see list below)
+
+**Available Voice Presets:**
+
+The following preset voices are available: Maya, Arjun, Serene, Bernard, Billy, Mark, Clint, Mabel, Chad, Leslie, Eleanor, Elias, Elliot, Grungle, Brodie, Sandra, Kirk, Kylie, Lara, Lisa, Malachi, Marlene, Martin, Miriam, Monster, Paula, Pip, Rusty, Ragnar, Xylar, Maggie, Jack, Katie, Noah, James, Rina, Ella, Mariah, Frank, Claudia, Niki, Vincent, Kendrick, Myrna, Tom, Wanda, Benjamin, Kiana, Rachel
+
 ### Task Object
 
 The `RunwayML::Task` object represents a video generation task:
@@ -394,6 +456,7 @@ The gem supports the following AI models for video generation, character control
 - `act_two` - Character performance control (Character Performance)
 - `eleven_text_to_sound_v2` - Sound effect generation from text (Sound Effects)
 - `eleven_multilingual_sts_v2` - Speech-to-speech conversion (Speech-to-Speech)
+- `eleven_multilingual_v2` - Text-to-speech generation (Text-to-Speech)
 
 Each model has different capabilities, supported ratios, and parameters. Refer to the [RunwayML API documentation](https://docs.dev.runwayml.com/api) for model-specific requirements.
 

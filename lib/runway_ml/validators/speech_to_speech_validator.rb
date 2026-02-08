@@ -1,21 +1,28 @@
 # frozen_string_literal: true
 
 require_relative "base_validators"
+require_relative "voice_validator"
 
 module RunwayML
   module Validators
     class SpeechToSpeechValidator
+      def initialize
+        @voice_validator = VoiceValidator.new
+      end
+
       def validate(media:, voice:, remove_background_noise:)
         errors = {}
 
         validate_media(media, errors)
-        validate_voice(voice, errors)
+        voice_validator.validate(voice, errors)
         validate_remove_background_noise(remove_background_noise, errors)
 
         { errors: errors }
       end
 
       private
+
+      attr_reader :voice_validator
 
       def validate_media(media, errors)
         if media.nil?
@@ -37,29 +44,6 @@ module RunwayML
 
         if media_uri.nil? || media_uri.empty?
           errors[:media] = "uri cannot be empty" if errors[:media].nil?
-        end
-      end
-
-      def validate_voice(voice, errors)
-        if voice.nil?
-          errors[:voice] = "cannot be empty"
-          return
-        end
-
-        unless voice.is_a?(Hash)
-          errors[:voice] = "must be a hash"
-          return
-        end
-
-        voice_type = voice[:type]
-        preset_id = voice[:presetId]
-
-        unless SpeechToSpeech::VALID_VOICE_TYPES.include?(voice_type)
-          errors[:voice] = "type must be one of: #{SpeechToSpeech::VALID_VOICE_TYPES.join(', ')}"
-        end
-
-        unless SpeechToSpeech::VALID_PRESET_IDS.include?(preset_id)
-          errors[:voice] = "presetId must be one of: #{SpeechToSpeech::VALID_PRESET_IDS.join(', ')}" if errors[:voice].nil?
         end
       end
 
