@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "runway/ruby"
+require "runway_ml"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

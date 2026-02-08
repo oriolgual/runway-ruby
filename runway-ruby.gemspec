@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require_relative "lib/runway/ruby/version"
+require_relative "lib/runway_ml/version"
 
 Gem::Specification.new do |spec|
   spec.name = "runway-ruby"
-  spec.version = Runway::Ruby::VERSION
+  spec.version = RunwayML::VERSION
   spec.authors = [ "Oriol Gual" ]
   spec.email = [ "oriol.gual@gmail.com" ]
 
-  spec.summary = "A Ruby client for Runway API."
+  spec.summary = "A Ruby client for RunwayML's API."
   spec.description =
     "Lets you integrate Runway's generative models into your Ruby applications."
   spec.homepage = "https://github.com/oriolgual/runway-ruby"

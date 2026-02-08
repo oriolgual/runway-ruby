@@ -1,28 +1,238 @@
-# Runway::Ruby
+# RunwayML Ruby SDK
 
-TODO: Delete this and the text below, and describe your gem
-
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/runway/ruby`. To experiment with that code, run `bin/console` for an interactive prompt.
+Ruby client for the [RunwayML API](https://docs.dev.runwayml.com/). Generate videos from images using state-of-the-art AI models like Gen-4 Turbo and Veo 3.1.
 
 ## Installation
-
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
 
 Install the gem and add to the application's Gemfile by executing:
 
 ```bash
-bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+bundle add runway-ruby
 ```
 
 If bundler is not being used to manage dependencies, install the gem by executing:
 
 ```bash
-gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+gem install runway-ruby
+```
+
+## Setup
+
+1. Create a developer account following [Runway's guide](https://docs.dev.runwayml.com/guides/setup/)
+2. Create an API key
+3. Set your API key as an environment variable:
+
+```bash
+export RUNWAY_API_SECRET='your-api-key-here'
 ```
 
 ## Usage
 
-TODO: Write usage instructions here
+### Basic Image-to-Video Generation
+
+Generate a video from an image URL:
+
+```ruby
+require 'runway_ml'
+
+# Create a new image-to-video task using the "gen4_turbo" model
+begin
+  task = RunwayML.image_to_video(
+    model: 'gen4_turbo',
+    prompt_image: 'https://upload.wikimedia.org/wikipedia/commons/8/85/Tour_Eiffel_Wikimedia_Commons_(cropped).jpg',
+    prompt_text: 'A timelapse on a sunny day with clouds flying by',
+    ratio: '1280:720',
+    duration: 5
+  )
+
+  puts "Task created with ID: #{task.id}"
+  # => Task created with ID: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+rescue RunwayML::ValidationError => e
+  puts "Validation failed: #{e.message}"
+rescue RunwayML::Error => e
+  puts "Error: #{e.message}"
+end
+```
+
+The method returns a `RunwayML::Task` object with the task ID. You can use this ID to check the status of your video generation.
+
+Alternatively, you can create a client instance if you need to make multiple requests:
+
+```ruby
+client = RunwayML::Client.new(api_secret: ENV['RUNWAY_API_SECRET'])
+task = client.image_to_video.create(
+  model: 'gen4_turbo',
+  prompt_image: 'https://example.com/image.jpg',
+  prompt_text: 'A timelapse on a sunny day',
+  ratio: '1280:720',
+  duration: 5
+)
+
+puts task.id # => "497f6eca-6276-4993-bfeb-53cbbbba6f08"
+```
+
+### Task Object
+
+The `RunwayML::Task` object represents a video generation task:
+
+```ruby
+task = RunwayML.image_to_video(...)
+
+# Access the task ID
+task.id  # => "497f6eca-6276-4993-bfeb-53cbbbba6f08"
+
+# Convert to hash
+task.to_h  # => { id: "497f6eca-6276-4993-bfeb-53cbbbba6f08" }
+
+# String representation
+task.to_s  # => "#<RunwayML::Task id=497f6eca-6276-4993-bfeb-53cbbbba6f08>"
+```
+
+### Using Local Image Files
+
+The gem makes it easy to work with local files - just pass a file path and it will automatically be converted to a data URI:
+
+```ruby
+require 'runway_ml'
+
+# Simply pass the file path - the gem handles the conversion
+task = RunwayML.image_to_video(
+  model: 'gen4_turbo',
+  prompt_image: 'path/to/your/image.jpg',  # Local file path
+  prompt_text: 'A timelapse on a sunny day with clouds flying by',
+  ratio: '1280:720',
+  duration: 5
+)
+```
+
+### Using File Objects or StringIO
+
+You can also pass File objects or StringIO directly:
+
+```ruby
+# Using a File object
+File.open('image.jpg', 'rb') do |file|
+  task = RunwayML.image_to_video(
+    model: 'gen4_turbo',
+    prompt_image: file,
+    prompt_text: 'A timelapse on a sunny day with clouds flying by',
+    ratio: '1280:720',
+    duration: 5
+  )
+end
+
+# Using StringIO
+require 'stringio'
+
+image_data = StringIO.new(File.binread('image.jpg'))
+task = RunwayML.image_to_video(
+  model: 'gen4_turbo',
+  prompt_image: image_data,
+  prompt_text: 'A timelapse on a sunny day with clouds flying by',
+  ratio: '1280:720',
+  duration: 5
+)
+```
+
+### Using Data URIs
+
+You can manually create base64-encoded data URIs if needed:
+
+```ruby
+require 'runway_ml'
+require 'base64'
+
+# Read and encode the image file
+image_buffer = File.binread('example.png')
+data_uri = "data:image/png;base64,#{Base64.strict_encode64(image_buffer)}"
+
+# Create a new image-to-video task
+task = RunwayML.image_to_video(
+  model: 'gen4_turbo',
+  prompt_image: data_uri,
+  prompt_text: 'A timelapse on a sunny day with clouds flying by',
+  ratio: '1280:720',
+  duration: 5
+)
+```
+
+### Supported Models
+
+The gem supports the following AI models:
+
+- `gen4_turbo` - Fast generation with flexible parameters
+- `veo3.1` - High-quality with audio support and optional end frames
+- `veo3.1_fast` - Faster variant of Veo 3.1
+- `gen3a_turbo` - Alternative model with different aspect ratios
+- `veo3` - Stable model with 8-second duration
+
+Each model has different capabilities, supported ratios, and duration ranges. Refer to the [RunwayML API documentation](https://docs.dev.runwayml.com/api) for model-specific requirements.
+
+### Supported Image Formats
+
+The gem supports the following image formats:
+
+- **JPEG** (`.jpg`, `.jpeg`)
+- **PNG** (`.png`)
+- **WebP** (`.webp`)
+
+GIF images are not supported.
+
+### Validation
+
+The gem performs comprehensive client-side validation before making API calls:
+
+```ruby
+begin
+  task = RunwayML.image_to_video(
+    model: 'gen4_turbo',
+    prompt_image: 'image.jpg',
+    prompt_text: '',  # Invalid: empty text
+    ratio: '999:999',  # Invalid: unsupported ratio
+    duration: 100  # Invalid: out of range
+  )
+rescue RunwayML::ValidationError => e
+  puts e.message
+  # => Validation failed:
+  #      - prompt_text: cannot be empty
+  #      - ratio: must be one of: 1280:720, 720:1280, 1104:832, 832:1104, 960:960, 1584:672
+  #      - duration: must be between 2 and 10 seconds
+
+  # Access individual errors
+  puts e.errors
+  # => { prompt_text: "cannot be empty", ratio: "must be one of: ...", ... }
+end
+```
+
+### Error Handling
+
+The gem provides several error classes for handling different failure scenarios. All errors inherit from `RunwayML::Error`:
+
+```ruby
+begin
+  task = RunwayML.image_to_video(
+    model: 'gen4_turbo',
+    prompt_image: 'image.jpg',
+    prompt_text: 'A beautiful scene',
+    ratio: '1280:720',
+    duration: 5
+  )
+rescue RunwayML::Error => e
+  puts "Error: #{e.message}"
+end
+```
+
+**Available Error Classes:**
+
+- `RunwayML::ValidationError` - Client-side parameter validation failed
+- `RunwayML::BadRequestError` - API validation errors (includes formatted validation issues)
+- `RunwayML::AuthenticationError` - Invalid or missing API key
+- `RunwayML::RateLimitError` - Too many requests (includes `retry_after`)
+- `RunwayML::SSLError` - SSL certificate verification failed
+- `RunwayML::APIConnectionError` - Network connectivity issues
+- `RunwayML::APIError` - Other API errors
+
+The gem performs client-side validation before making API calls (raises `ValidationError`), but the API may also perform additional server-side validation (raises `BadRequestError` with detailed error information).
 
 ## Development
 
