@@ -35,6 +35,8 @@ export RUNWAY_API_SECRET='your-api-key-here'
   - [Sound Effect Generation](#sound-effect-generation)
   - [Speech-to-Speech Conversion](#speech-to-speech-conversion)
   - [Text-to-Speech Generation](#text-to-speech-generation)
+  - [Voice Dubbing](#voice-dubbing)
+  - [Voice Isolation](#voice-isolation)
   - [Task Object](#task-object)
   - [Using Local Image Files](#using-local-image-files)
   - [Using File Objects or StringIO](#using-file-objects-or-stringio)
@@ -281,6 +283,89 @@ task.output # => ["https://..."]
 
 The following preset voices are available: Maya, Arjun, Serene, Bernard, Billy, Mark, Clint, Mabel, Chad, Leslie, Eleanor, Elias, Elliot, Grungle, Brodie, Sandra, Kirk, Kylie, Lara, Lisa, Malachi, Marlene, Martin, Miriam, Monster, Paula, Pip, Rusty, Ragnar, Xylar, Maggie, Jack, Katie, Noah, James, Rina, Ella, Mariah, Frank, Claudia, Niki, Vincent, Kendrick, Myrna, Tom, Wanda, Benjamin, Kiana, Rachel
 
+### Voice Dubbing
+
+Dub audio content to a target language while optionally preserving the original voice characteristics:
+
+```ruby
+require 'runway_ml'
+
+# Dub audio to Spanish
+task = RunwayML.voice_dubbing(
+  model: 'eleven_voice_dubbing',
+  audio_uri: 'https://example.com/audio.mp3',
+  target_lang: 'es'
+).wait_for_output
+
+task.status # => "SUCCEEDED"
+task.output # => ["https://..."]
+```
+
+You can customize the dubbing process with additional options:
+
+```ruby
+# Dub audio with custom options
+task = RunwayML.voice_dubbing(
+  model: 'eleven_voice_dubbing',
+  audio_uri: 'https://example.com/audio.mp3',
+  target_lang: 'fr',
+  disable_voice_cloning: true,      # Use generic voice instead of cloning
+  drop_background_audio: true,      # Remove background audio
+  num_speakers: 2                   # Specify number of speakers
+).wait_for_output
+```
+
+**Voice Dubbing Parameters:**
+
+- `model` - Required. Must be `'eleven_voice_dubbing'`
+- `audio_uri` - Required. HTTPS URL, Runway URI, or data URI containing the audio to dub
+- `target_lang` - Required. The target language code (e.g., "es" for Spanish, "fr" for French). Supported languages: en, hi, pt, zh, es, fr, de, ja, ar, ru, ko, id, it, nl, tr, pl, sv, fil, ms, ro, uk, el, cs, da, fi, bg, hr, sk, ta
+- `disable_voice_cloning` - Optional. Boolean. Set to true to use a generic voice instead of cloning the original voice
+- `drop_background_audio` - Optional. Boolean. Set to true to remove background audio from the dubbed output
+- `num_speakers` - Optional. Integer (0-9007199254740991). The number of speakers in the audio. If not provided, it will be detected automatically
+
+### Voice Isolation
+
+Isolate the voice from background audio. Audio duration must be greater than 4.6 seconds and less than 3600 seconds:
+
+```ruby
+require 'runway_ml'
+
+# Isolate voice from audio
+task = RunwayML.voice_isolation(
+  model: 'eleven_voice_isolation',
+  audio_uri: 'https://example.com/audio.mp3'
+).wait_for_output
+
+task.status # => "SUCCEEDED"
+task.output # => ["https://..."]
+```
+
+You can also use Runway URIs or data URIs:
+
+```ruby
+# Using a Runway URI
+task = RunwayML.voice_isolation(
+  model: 'eleven_voice_isolation',
+  audio_uri: 'runway://audio123'
+).wait_for_output
+
+# Using a data URI
+require 'base64'
+audio_data = File.binread('audio.mp3')
+data_uri = "data:audio/mpeg;base64,#{Base64.strict_encode64(audio_data)}"
+
+task = RunwayML.voice_isolation(
+  model: 'eleven_voice_isolation',
+  audio_uri: data_uri
+).wait_for_output
+```
+
+**Voice Isolation Parameters:**
+
+- `model` - Required. Must be `'eleven_voice_isolation'`
+- `audio_uri` - Required. HTTPS URL, Runway URI, or data URI containing the audio. Duration must be > 4.6 seconds and < 3600 seconds
+
 ### Task Object
 
 The API returns a `RunwayML::Task` object which provides convenient methods to manage your task:
@@ -387,6 +472,8 @@ The gem supports the following AI models for video generation, character control
 - `eleven_text_to_sound_v2` - Sound effect generation from text (Sound Effects)
 - `eleven_multilingual_sts_v2` - Speech-to-speech conversion (Speech-to-Speech)
 - `eleven_multilingual_v2` - Text-to-speech generation (Text-to-Speech)
+- `eleven_voice_dubbing` - Voice dubbing to different languages (Voice Dubbing)
+- `eleven_voice_isolation` - Voice isolation from background audio (Voice Isolation)
 
 Each model has different capabilities, supported ratios, and parameters. Refer to the [RunwayML API documentation](https://docs.dev.runwayml.com/api) for model-specific requirements.
 
