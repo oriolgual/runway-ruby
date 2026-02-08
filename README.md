@@ -56,6 +56,33 @@ end
 
 The method returns a `RunwayML::Task` object with the task ID. You can use this ID to check the status of your video generation.
 
+### Text-to-Video Generation
+
+Generate a video from a text prompt without requiring an image:
+
+```ruby
+require 'runway_ml'
+
+# Create a new text-to-video task using the "veo3.1" model
+begin
+  task = RunwayML.text_to_video(
+    model: 'veo3.1',
+    prompt_text: 'A cute bunny hopping in a meadow',
+    ratio: '1280:720',
+    duration: 8
+  )
+
+  puts "Task created with ID: #{task.id}"
+  # => Task created with ID: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+rescue RunwayML::ValidationError => e
+  puts "Validation failed: #{e.message}"
+rescue RunwayML::Error => e
+  puts "Error: #{e.message}"
+end
+```
+
+The text-to-video method works similarly to image-to-video, but generates videos directly from text descriptions without requiring an input image. This is useful for creating videos from scratch based on creative prompts.
+
 ### Task Object
 
 The `RunwayML::Task` object represents a video generation task:

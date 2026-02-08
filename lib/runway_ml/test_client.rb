@@ -42,6 +42,10 @@ module RunwayML
         raise "No injected response for #{method.upcase} #{path} with params: #{params.inspect}"
       end
       response = @responses[key]
+      if response.is_a?(Array)
+        raise "No injected response remaining for #{method.upcase} #{path} with params: #{params.inspect}" if response.empty?
+        response = response.shift
+      end
       raise response if response.is_a?(Exception)
 
       response
