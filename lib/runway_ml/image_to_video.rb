@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "errors"
 require_relative "image_processor"
 require_relative "validators/gen4_turbo_validator"
 require_relative "validators/veo3_validator"
@@ -7,21 +8,6 @@ require_relative "validators/veo3_stable_validator"
 require_relative "validators/gen3a_turbo_validator"
 
 module RunwayML
-  class ValidationError < RunwayML::Error
-    attr_reader :errors
-
-    def initialize(errors)
-      @errors = errors
-      super(format_message)
-    end
-
-    private
-
-    def format_message
-      "Validation failed:\n" + errors.map { |field, message| "  - #{field}: #{message}" }.join("\n")
-    end
-  end
-
   class ImageToVideo
     VALID_MODELS = [ "gen4_turbo", "veo3.1", "gen3a_turbo", "veo3.1_fast", "veo3" ].freeze
 
