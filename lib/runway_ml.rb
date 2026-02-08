@@ -12,6 +12,14 @@ module RunwayML
   end
 
   def self.image_to_video(api_secret: ENV["RUNWAY_API_SECRET"], **params)
-    client(api_secret: api_secret).image_to_video.create(**params)
+    ImageToVideo.new(client: client(api_secret: api_secret)).create(**params)
+  end
+
+  def self.task_retrieve(id, api_secret: ENV["RUNWAY_API_SECRET"])
+    Task.new(id: id, client: client(api_secret: api_secret)).retrieve
+  end
+
+  def self.task_delete(id, api_secret: ENV["RUNWAY_API_SECRET"])
+    Task.new(id: id, client: client(api_secret: api_secret)).delete
   end
 end

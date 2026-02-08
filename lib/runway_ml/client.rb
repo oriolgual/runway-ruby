@@ -11,22 +11,29 @@ module RunwayML
       @api_version = api_version
     end
 
-    def image_to_video
-      ImageToVideo.new(client: self)
+    def post(path, params)
+      request(:post, path, params)
     end
 
-    def post(path, params)
+    def get(path)
+      request(:get, path)
+    end
+
+    def delete(path)
+      request(:delete, path)
+    end
+
+    private
+
+    attr_reader :api_secret, :base_url, :api_version
+
+    def request(method, path, params = nil)
       uri = URI("#{base_url}#{path}")
 
       Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
-        request = Net::HTTP::Post.new(uri)
-        request["Content-Type"] = "application/json"
-        request["Authorization"] = "Bearer #{api_secret}"
-        request["X-Runway-Version"] = api_version
-        request.body = JSON.generate(params)
-
+        request = build_request(method, uri, params)
         response = http.request(request)
-        body = JSON.parse(response.body) rescue nil
+        body = parse_body(response)
 
         unless response.is_a?(Net::HTTPSuccess)
           headers = response.to_hash.transform_keys(&:downcase)
@@ -42,8 +49,36 @@ module RunwayML
       raise APIConnectionError.new(message: e.message, cause: e)
     end
 
-    private
+    def build_request(method, uri, params)
+      request_class = case method
+      when :get
+        Net::HTTP::Get
+      when :post
+        Net::HTTP::Post
+      when :delete
+        Net::HTTP::Delete
+      else
+        raise ArgumentError, "Unsupported HTTP method: #{method}"
+      end
 
-    attr_reader :api_secret, :base_url, :api_version
+      request = request_class.new(uri)
+      request["Authorization"] = "Bearer #{api_secret}"
+      request["X-Runway-Version"] = api_version
+
+      if method == :post
+        request["Content-Type"] = "application/json"
+        request.body = JSON.generate(params || {})
+      end
+
+      request
+    end
+
+    def parse_body(response)
+      return nil if response.body.nil? || response.body.strip.empty?
+
+      JSON.parse(response.body)
+    rescue JSON::ParserError
+      nil
+    end
   end
 end

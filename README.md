@@ -56,21 +56,6 @@ end
 
 The method returns a `RunwayML::Task` object with the task ID. You can use this ID to check the status of your video generation.
 
-Alternatively, you can create a client instance if you need to make multiple requests:
-
-```ruby
-client = RunwayML::Client.new(api_secret: ENV['RUNWAY_API_SECRET'])
-task = client.image_to_video.create(
-  model: 'gen4_turbo',
-  prompt_image: 'https://example.com/image.jpg',
-  prompt_text: 'A timelapse on a sunny day',
-  ratio: '1280:720',
-  duration: 5
-)
-
-puts task.id # => "497f6eca-6276-4993-bfeb-53cbbbba6f08"
-```
-
 ### Task Object
 
 The `RunwayML::Task` object represents a video generation task:
@@ -86,6 +71,20 @@ task.to_h  # => { id: "497f6eca-6276-4993-bfeb-53cbbbba6f08" }
 
 # String representation
 task.to_s  # => "#<RunwayML::Task id=497f6eca-6276-4993-bfeb-53cbbbba6f08>"
+
+# Fetch task details
+task.retrieve
+task.status     # => "PENDING"
+task.created_at # => "2024-06-27T19:49:32.334Z"
+
+# Status-specific fields
+task.progress     # => 0.42 (RUNNING)
+task.failure      # => "Something went wrong" (FAILED)
+task.failure_code # => "SOME_ERROR" (FAILED)
+task.output       # => ["https://..."] (SUCCEEDED)
+
+# Delete a task
+task.delete     # => true/false
 ```
 
 ### Using Local Image Files
