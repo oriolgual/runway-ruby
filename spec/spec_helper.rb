@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "runway_ml"
+require "runway_ml/test_client"
+require_relative "support/matchers/client_requests"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -11,5 +13,15 @@ RSpec.configure do |config|
 
   config.expect_with :rspec do |c|
     c.syntax = :expect
+  end
+
+  config.before do
+    RunwayML.client_class = RunwayML::TestClient
+    RunwayML.test_client = RunwayML::TestClient.new
+  end
+
+  config.after do
+    RunwayML.test_client&.reset!
+    RunwayML.test_client = nil
   end
 end

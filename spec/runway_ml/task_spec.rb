@@ -11,7 +11,7 @@ RSpec.describe RunwayML::Task do
   end
 
   describe "#retrieve" do
-    let(:client) { instance_double(RunwayML::Client) }
+    let(:client) { RunwayML.test_client }
 
     it "fetches and stores task details" do
       task = described_class.new(id: "task-123", client: client)
@@ -21,13 +21,14 @@ RSpec.describe RunwayML::Task do
         "createdAt" => "2024-06-27T19:49:32.334Z"
       }
 
-      expect(client).to receive(:get).with("tasks/task-123").and_return(response)
+      client.inject_response(:get, "tasks/task-123", response: response)
 
       task.retrieve
 
       expect(task.status).to eq("PENDING")
       expect(task.created_at).to eq("2024-06-27T19:49:32.334Z")
       expect(task.data).to eq(response)
+      expect(client).to have_been_called_with(method: :get, path: "tasks/task-123", params: nil)
     end
 
     it "stores running status details" do
@@ -39,12 +40,13 @@ RSpec.describe RunwayML::Task do
         "progress" => 0.42
       }
 
-      expect(client).to receive(:get).with("tasks/task-123").and_return(response)
+      client.inject_response(:get, "tasks/task-123", response: response)
 
       task.retrieve
 
       expect(task.status).to eq("RUNNING")
       expect(task.progress).to eq(0.42)
+      expect(client).to have_been_called_with(method: :get, path: "tasks/task-123", params: nil)
     end
 
     it "stores failed status details" do
@@ -57,13 +59,14 @@ RSpec.describe RunwayML::Task do
         "failureCode" => "SOME_ERROR"
       }
 
-      expect(client).to receive(:get).with("tasks/task-123").and_return(response)
+      client.inject_response(:get, "tasks/task-123", response: response)
 
       task.retrieve
 
       expect(task.status).to eq("FAILED")
       expect(task.failure).to eq("Something went wrong")
       expect(task.failure_code).to eq("SOME_ERROR")
+      expect(client).to have_been_called_with(method: :get, path: "tasks/task-123", params: nil)
     end
 
     it "stores succeeded status details" do
@@ -75,12 +78,13 @@ RSpec.describe RunwayML::Task do
         "output" => [ "https://example.com/output.mp4" ]
       }
 
-      expect(client).to receive(:get).with("tasks/task-123").and_return(response)
+      client.inject_response(:get, "tasks/task-123", response: response)
 
       task.retrieve
 
       expect(task.status).to eq("SUCCEEDED")
       expect(task.output).to eq([ "https://example.com/output.mp4" ])
+      expect(client).to have_been_called_with(method: :get, path: "tasks/task-123", params: nil)
     end
 
     it "raises an error when no client is provided" do
@@ -91,23 +95,25 @@ RSpec.describe RunwayML::Task do
   end
 
   describe "#delete" do
-    let(:client) { instance_double(RunwayML::Client) }
+    let(:client) { RunwayML.test_client }
 
     it "cancels a task and returns true" do
       task = described_class.new(id: "task-123", client: client)
 
-      expect(client).to receive(:delete).with("tasks/task-123").and_return(nil)
+      client.inject_response(:delete, "tasks/task-123", response: nil)
 
       expect(task.delete).to eq(true)
+      expect(client).to have_been_called_with(method: :delete, path: "tasks/task-123", params: nil)
     end
 
     it "returns false when task is not found" do
       task = described_class.new(id: "task-123", client: client)
       error = RunwayML::NotFoundError.new(404, nil, "Not Found", {})
 
-      expect(client).to receive(:delete).with("tasks/task-123").and_raise(error)
+      client.inject_response(:delete, "tasks/task-123", response: error)
 
       expect(task.delete).to eq(false)
+      expect(client).to have_been_called_with(method: :delete, path: "tasks/task-123", params: nil)
     end
 
     it "raises an error when no client is provided" do
