@@ -56,7 +56,7 @@ module RunwayML
         inputs.merge(model: model)
       )
 
-      Task.new(id: response["id"])
+      Task.new(id: response["id"], client: client)
     end
 
     private
