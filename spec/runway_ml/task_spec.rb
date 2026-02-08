@@ -123,6 +123,70 @@ RSpec.describe RunwayML::Task do
     end
   end
 
+  describe "#wait_for_output" do
+    it "polls until the task succeeds and updates attributes" do
+      client = RunwayML.test_client
+      task = described_class.new(id: "task-123", client: client)
+      response_pending = {
+        "id" => "task-123",
+        "status" => "RUNNING",
+        "progress" => 0.2
+      }
+      response_succeeded = {
+        "id" => "task-123",
+        "status" => "SUCCEEDED",
+        "output" => [ "https://example.com/output.mp4" ]
+      }
+
+      client.inject_response(
+        :get,
+        "tasks/task-123",
+        response: [ response_pending, response_succeeded ]
+      )
+      allow(task).to receive(:sleep)
+
+      result = task.wait_for_output
+
+      expect(result).to eq(task)
+      expect(task.status).to eq("SUCCEEDED")
+      expect(task.output).to eq([ "https://example.com/output.mp4" ])
+    end
+
+    it "raises a TaskFailedError when the task fails" do
+      client = RunwayML.test_client
+      task = described_class.new(id: "task-123", client: client)
+      response_failed = {
+        "id" => "task-123",
+        "status" => "FAILED",
+        "failure" => "Something went wrong",
+        "failureCode" => "SOME_ERROR"
+      }
+
+      client.inject_response(:get, "tasks/task-123", response: response_failed)
+      allow(task).to receive(:sleep)
+
+      expect { task.wait_for_output }.to raise_error(RunwayML::TaskFailedError)
+      expect(task.status).to eq("FAILED")
+      expect(task.failure).to eq("Something went wrong")
+    end
+
+    it "raises a TaskTimeoutError when the task does not finish in time" do
+      client = RunwayML.test_client
+      task = described_class.new(id: "task-123", client: client)
+      response_pending = {
+        "id" => "task-123",
+        "status" => "RUNNING"
+      }
+
+      client.inject_response(:get, "tasks/task-123", response: [ response_pending, response_pending ])
+      allow(task).to receive(:sleep)
+      allow(Time).to receive(:now).and_return(Time.at(0), Time.at(100))
+
+      expect { task.wait_for_output(timeout: 1) }.to raise_error(RunwayML::TaskTimeoutError)
+      expect(task.status).to eq("RUNNING")
+    end
+  end
+
   describe "#==" do
     it "returns true when comparing tasks with the same id" do
       task1 = described_class.new(id: "test-id")
