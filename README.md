@@ -26,6 +26,27 @@ gem install runway-ruby
 export RUNWAY_API_SECRET='your-api-key-here'
 ```
 
+## Table of Contents
+
+- [Usage](#usage)
+  - [Basic Image-to-Video Generation](#basic-image-to-video-generation)
+  - [Text-to-Video Generation](#text-to-video-generation)
+  - [Character Performance](#character-performance)
+  - [Sound Effect Generation](#sound-effect-generation)
+  - [Speech-to-Speech Conversion](#speech-to-speech-conversion)
+  - [Text-to-Speech Generation](#text-to-speech-generation)
+  - [Task Object](#task-object)
+  - [Using Local Image Files](#using-local-image-files)
+  - [Using File Objects or StringIO](#using-file-objects-or-stringio)
+  - [Using Data URIs](#using-data-uris)
+- [Supported Models](#supported-models)
+- [Supported Image Formats](#supported-image-formats)
+- [Validation](#validation)
+- [Error Handling](#error-handling)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Usage
 
 ### Basic Image-to-Video Generation
@@ -66,24 +87,16 @@ The method returns a `RunwayML::Task` object with the task ID. You can use this 
 Generate a video from a text prompt without requiring an image:
 
 ```ruby
-require 'runway_ml'
-
 # Create a new text-to-video task using the "veo3.1" model
-begin
-  task = RunwayML.text_to_video(
-    model: 'veo3.1',
-    prompt_text: 'A cute bunny hopping in a meadow',
-    ratio: '1280:720',
-    duration: 8
-  )
+task = RunwayML.text_to_video(
+  model: 'veo3.1',
+  prompt_text: 'A cute bunny hopping in a meadow',
+  ratio: '1280:720',
+  duration: 8
+).wait_for_output
 
-  puts "Task created with ID: #{task.id}"
-  # => Task created with ID: 497f6eca-6276-4993-bfeb-53cbbbba6f08
-rescue RunwayML::ValidationError => e
-  puts "Validation failed: #{e.message}"
-rescue RunwayML::Error => e
-  puts "Error: #{e.message}"
-end
+task.status # => "SUCCEEDED"
+task.output # => ["https://..."]
 ```
 
 The text-to-video method works similarly to image-to-video, but generates videos directly from text descriptions without requiring an input image. This is useful for creating videos from scratch based on creative prompts.
@@ -129,19 +142,13 @@ You can also use a video as the character input instead of an image:
 ```ruby
 task = RunwayML.character_performance(
   model: 'act_two',
-  character: {
-    type: 'video',
-    uri: 'https://example.com/character_video.mp4'
-  },
-  reference: {
-    type: 'video',
-    uri: 'https://example.com/performance.mp4'
-  },
+  character: { type: 'video', uri: 'https://example.com/character_video.mp4' },
+  reference: { type: 'video', uri: 'https://example.com/performance.mp4' },
   ratio: '1280:720',
-  body_control: true,  # Enable body movement in addition to facial expressions
-  expression_intensity: 3,  # 1-5 scale for expression intensity
+  body_control: true,
+  expression_intensity: 3,
   seed: 12345
-)
+).wait_for_output
 ```
 
 **Character Performance Parameters:**
@@ -164,29 +171,16 @@ task = RunwayML.character_performance(
 Generate sound effects from text descriptions:
 
 ```ruby
-require 'runway_ml'
-
 # Create a new sound effect task
-begin
-  task = RunwayML.sound_effect(
-    model: 'eleven_text_to_sound_v2',
-    prompt_text: 'A thunderstorm with heavy rain',
-    duration: 10,
-    loop: true
-  )
+task = RunwayML.sound_effect(
+  model: 'eleven_text_to_sound_v2',
+  prompt_text: 'A thunderstorm with heavy rain',
+  duration: 10,
+  loop: true
+).wait_for_output
 
-  puts "Task created with ID: #{task.id}"
-  # => Task created with ID: 497f6eca-6276-4993-bfeb-53cbbbba6f08
-
-  # Wait for the task to finish
-  task.wait_for_output
-  task.status # => "SUCCEEDED"
-  task.output # => ["https://..."]
-rescue RunwayML::ValidationError => e
-  puts "Validation failed: #{e.message}"
-rescue RunwayML::Error => e
-  puts "Error: #{e.message}"
-end
+task.status # => "SUCCEEDED"
+task.output # => ["https://..."]
 ```
 
 **Sound Effect Parameters:**
@@ -201,34 +195,14 @@ end
 Convert speech from one voice to another in audio or video files:
 
 ```ruby
-require 'runway_ml'
-
 # Convert speech in an audio file to a different voice
-begin
-  audio_task = RunwayML.speech_to_speech(
-    model: 'eleven_multilingual_sts_v2',
-    media: {
-      type: 'audio',
-      uri: 'https://example.com/audio.mp3'
-    },
-    voice: {
-      type: 'runway-preset',
-      presetId: 'Maggie'
-    }
-  )
+audio_task = RunwayML.speech_to_speech(
+  model: 'eleven_multilingual_sts_v2',
+  media: { type: 'audio', uri: 'https://example.com/audio.mp3' },
+  voice: { type: 'runway-preset', presetId: 'Maggie' }
+).wait_for_output
 
-  puts "Audio task created with ID: #{audio_task.id}"
-  # => Audio task created with ID: 497f6eca-6276-4993-bfeb-53cbbbba6f08
-
-  # Wait for the task to finish
-  audio_task.wait_for_output
-  audio_task.status # => "SUCCEEDED"
-  audio_task.output # => ["https://..."]
-rescue RunwayML::ValidationError => e
-  puts "Validation failed: #{e.message}"
-rescue RunwayML::Error => e
-  puts "Error: #{e.message}"
-end
+audio_task.status # => "SUCCEEDED"
 ```
 
 You can also convert speech in video files:
@@ -237,32 +211,11 @@ You can also convert speech in video files:
 # Convert speech in a video file to a different voice
 video_task = RunwayML.speech_to_speech(
   model: 'eleven_multilingual_sts_v2',
-  media: {
-    type: 'video',
-    uri: 'https://example.com/video.mp4'
-  },
-  voice: {
-    type: 'runway-preset',
-    presetId: 'Noah'
-  },
-  remove_background_noise: true  # Optional: remove background noise from the output
-)
-
-video_task.wait_for_output
-video_task.status # => "SUCCEEDED"
-video_task.output # => ["https://..."]
+  media: { type: 'video', uri: 'https://example.com/video.mp4' },
+  voice: { type: 'runway-preset', presetId: 'Noah' },
+  remove_background_noise: true
+).wait_for_output
 ```
-
-**Speech-to-Speech Parameters:**
-
-- `model` - Required. Must be `'eleven_multilingual_sts_v2'`
-- `media` - Required. The audio or video file containing dialogue to be processed
-  - `type`: Either `'audio'` or `'video'`
-  - `uri`: HTTPS URL, Runway URI, or data URI
-- `voice` - Required. The voice preset to use for the generated speech
-  - `type`: Must be `'runway-preset'`
-  - `presetId`: One of the available voice IDs (see list below)
-- `remove_background_noise` - Optional. Whether to remove background noise from the generated speech (default: false)
 
 **Available Voice Presets:**
 
@@ -286,28 +239,17 @@ Generate speech from text descriptions using various voice presets:
 require 'runway_ml'
 
 # Generate speech from text
-begin
-  task = RunwayML.text_to_speech(
-    model: 'eleven_multilingual_v2',
-    prompt_text: 'The quick brown fox jumps over the lazy dog',
-    voice: {
-      type: 'runway-preset',
-      presetId: 'Leslie'
-    }
-  )
+task = RunwayML.text_to_speech(
+  model: 'eleven_multilingual_v2',
+  prompt_text: 'The quick brown fox jumps over the lazy dog',
+  voice: {
+    type: 'runway-preset',
+    presetId: 'Leslie'
+  }
+).wait_for_output
 
-  puts "Task created with ID: #{task.id}"
-  # => Task created with ID: 497f6eca-6276-4993-bfeb-53cbbbba6f08
-
-  # Wait for the task to finish
-  task.wait_for_output
-  task.status # => "SUCCEEDED"
-  task.output # => ["https://..."]
-rescue RunwayML::ValidationError => e
-  puts "Validation failed: #{e.message}"
-rescue RunwayML::Error => e
-  puts "Error: #{e.message}"
-end
+task.status # => "SUCCEEDED"
+task.output # => ["https://..."]
 ```
 
 You can also generate speech with different voices:
@@ -321,9 +263,8 @@ task = RunwayML.text_to_speech(
     type: 'runway-preset',
     presetId: 'Noah'
   }
-)
+).wait_for_output
 
-task.wait_for_output
 task.status # => "SUCCEEDED"
 task.output # => ["https://..."]
 ```
@@ -342,33 +283,22 @@ The following preset voices are available: Maya, Arjun, Serene, Bernard, Billy, 
 
 ### Task Object
 
-The `RunwayML::Task` object represents a video generation task:
+The API returns a `RunwayML::Task` object which provides convenient methods to manage your task:
 
 ```ruby
+# Create a new task
 task = RunwayML.image_to_video(...)
 
-# Access the task ID
-task.id  # => "497f6eca-6276-4993-bfeb-53cbbbba6f08"
+# Get task information
+task.id        # => "497f6eca-6276-4993-bfeb-53cbbbba6f08"
+task.status    # => "IN_PROGRESS" (IN_PROGRESS, QUEUED, FAILED, SUCCEEDED)
 
-# Convert to hash
-task.to_h  # => { id: "497f6eca-6276-4993-bfeb-53cbbbba6f08" }
-
-# String representation
-task.to_s  # => "#<RunwayML::Task id=497f6eca-6276-4993-bfeb-53cbbbba6f08>"
-
-# Fetch task details
-task.retrieve
-task.status     # => "PENDING"
-task.created_at # => "2024-06-27T19:49:32.334Z"
-
-# Wait for task completion (updates task attributes)
+# Wait for the task to complete (polls API by default every 2 seconds)
 task.wait_for_output
-task.status # => "SUCCEEDED"
-task.output # => ["https://..."]
 
-# Status-specific fields
-task.progress     # => 0.42 (RUNNING)
-task.failure      # => "Something went wrong" (FAILED)
+# Get the results
+task.status      # => "SUCCEEDED"
+task.output      # => ["https://..."]
 task.failure_code # => "SOME_ERROR" (FAILED)
 task.output       # => ["https://..."] (SUCCEEDED)
 
