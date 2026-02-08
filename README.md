@@ -196,6 +196,88 @@ end
 - `duration` - Optional. The duration of the sound effect in seconds (0.5-30). If not provided, the duration will be determined automatically based on the text description
 - `loop` - Optional. Whether the output sound effect should be designed to loop seamlessly (default: false)
 
+### Speech-to-Speech Conversion
+
+Convert speech from one voice to another in audio or video files:
+
+```ruby
+require 'runway_ml'
+
+# Convert speech in an audio file to a different voice
+begin
+  audio_task = RunwayML.speech_to_speech(
+    model: 'eleven_multilingual_sts_v2',
+    media: {
+      type: 'audio',
+      uri: 'https://example.com/audio.mp3'
+    },
+    voice: {
+      type: 'runway-preset',
+      presetId: 'Maggie'
+    }
+  )
+
+  puts "Audio task created with ID: #{audio_task.id}"
+  # => Audio task created with ID: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+
+  # Wait for the task to finish
+  audio_task.wait_for_output
+  audio_task.status # => "SUCCEEDED"
+  audio_task.output # => ["https://..."]
+rescue RunwayML::ValidationError => e
+  puts "Validation failed: #{e.message}"
+rescue RunwayML::Error => e
+  puts "Error: #{e.message}"
+end
+```
+
+You can also convert speech in video files:
+
+```ruby
+# Convert speech in a video file to a different voice
+video_task = RunwayML.speech_to_speech(
+  model: 'eleven_multilingual_sts_v2',
+  media: {
+    type: 'video',
+    uri: 'https://example.com/video.mp4'
+  },
+  voice: {
+    type: 'runway-preset',
+    presetId: 'Noah'
+  },
+  remove_background_noise: true  # Optional: remove background noise from the output
+)
+
+video_task.wait_for_output
+video_task.status # => "SUCCEEDED"
+video_task.output # => ["https://..."]
+```
+
+**Speech-to-Speech Parameters:**
+
+- `model` - Required. Must be `'eleven_multilingual_sts_v2'`
+- `media` - Required. The audio or video file containing dialogue to be processed
+  - `type`: Either `'audio'` or `'video'`
+  - `uri`: HTTPS URL, Runway URI, or data URI
+- `voice` - Required. The voice preset to use for the generated speech
+  - `type`: Must be `'runway-preset'`
+  - `presetId`: One of the available voice IDs (see list below)
+- `remove_background_noise` - Optional. Whether to remove background noise from the generated speech (default: false)
+
+**Available Voice Presets:**
+
+The following preset voices are available: Maya, Arjun, Serene, Bernard, Billy, Mark, Clint, Mabel, Chad, Leslie, Eleanor, Elias, Elliot, Grungle, Brodie, Sandra, Kirk, Kylie, Lara, Lisa, Malachi, Marlene, Martin, Miriam, Monster, Paula, Pip, Rusty, Ragnar, Xylar, Maggie, Jack, Katie, Noah, James, Rina, Ella, Mariah, Frank, Claudia, Niki, Vincent, Kendrick, Myrna, Tom, Wanda, Benjamin, Kiana, Rachel
+
+**Supported Audio Formats:**
+
+The gem supports the following audio formats for speech-to-speech conversion:
+
+- **MP3** (`.mp3`) - MPEG-1/2 Layer 3 codec
+- **WAV** (`.wav`) - PCM (uncompressed) codec
+- **FLAC** (`.flac`) - FLAC (lossless) codec
+- **M4A** (`.m4a`) - AAC or ALAC codec
+- **AAC** (`.aac`) - AAC (raw) codec
+
 ### Task Object
 
 The `RunwayML::Task` object represents a video generation task:
@@ -302,7 +384,7 @@ task = RunwayML.image_to_video(
 
 ### Supported Models
 
-The gem supports the following AI models for video generation, character control, and sound effect generation:
+The gem supports the following AI models for video generation, character control, sound effect generation, and speech conversion:
 
 - `gen4_turbo` - Fast generation with flexible parameters (Image-to-Video)
 - `veo3.1` - High-quality with audio support and optional end frames (Image/Text-to-Video)
@@ -311,6 +393,7 @@ The gem supports the following AI models for video generation, character control
 - `veo3` - Stable model with 8-second duration (Image/Text-to-Video)
 - `act_two` - Character performance control (Character Performance)
 - `eleven_text_to_sound_v2` - Sound effect generation from text (Sound Effects)
+- `eleven_multilingual_sts_v2` - Speech-to-speech conversion (Speech-to-Speech)
 
 Each model has different capabilities, supported ratios, and parameters. Refer to the [RunwayML API documentation](https://docs.dev.runwayml.com/api) for model-specific requirements.
 
