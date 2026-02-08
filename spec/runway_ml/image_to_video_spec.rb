@@ -3,22 +3,20 @@
 require "spec_helper"
 
 RSpec.describe RunwayML::ImageToVideo do
-  let(:client) { instance_double(RunwayML::Client) }
+  let(:client) { RunwayML.test_client }
   let(:image_to_video) { described_class.new(client: client) }
 
   describe "#create" do
     context "with valid gen4_turbo parameters" do
       it "validates and posts to the API" do
-        expect(client).to receive(:post).with(
-          "image_to_video",
-          {
-            model: "gen4_turbo",
-            promptImage: "https://example.com/image.jpg",
-            promptText: "A beautiful sunset",
-            ratio: "1280:720",
-            duration: 5
-          }
-        ).and_return({ "id" => "123" })
+        expected_params = {
+          model: "gen4_turbo",
+          promptImage: "https://example.com/image.jpg",
+          promptText: "A beautiful sunset",
+          ratio: "1280:720",
+          duration: 5
+        }
+        client.inject_response(:post, "image_to_video", params: expected_params, response: { "id" => "123" })
 
         result = image_to_video.create(
           model: "gen4_turbo",
@@ -30,15 +28,19 @@ RSpec.describe RunwayML::ImageToVideo do
 
         expect(result).to be_a(RunwayML::Task)
         expect(result.id).to eq("123")
+        expect(client).to have_been_called_with(method: :post, path: "image_to_video", params: expected_params)
       end
 
       it "includes optional seed parameter" do
-        expect(client).to receive(:post).with(
-          "image_to_video",
-          hash_including(
-            seed: 12345
-          )
-        ).and_return({ "id" => "task-123" })
+        expected_params = {
+          model: "gen4_turbo",
+          promptImage: "https://example.com/image.jpg",
+          promptText: "A beautiful sunset",
+          ratio: "1280:720",
+          duration: 5,
+          seed: 12345
+        }
+        client.inject_response(:post, "image_to_video", params: expected_params, response: { "id" => "task-123" })
 
         image_to_video.create(
           model: "gen4_turbo",
@@ -48,15 +50,19 @@ RSpec.describe RunwayML::ImageToVideo do
           duration: 5,
           seed: 12345
         )
+        expect(client).to have_been_called_with(method: :post, path: "image_to_video", params: expected_params)
       end
 
       it "includes content moderation settings" do
-        expect(client).to receive(:post).with(
-          "image_to_video",
-          hash_including(
-            contentModeration: { publicFigureThreshold: "low" }
-          )
-        ).and_return({ "id" => "task-123" })
+        expected_params = {
+          model: "gen4_turbo",
+          promptImage: "https://example.com/image.jpg",
+          promptText: "A beautiful sunset",
+          ratio: "1280:720",
+          duration: 5,
+          contentModeration: { publicFigureThreshold: "low" }
+        }
+        client.inject_response(:post, "image_to_video", params: expected_params, response: { "id" => "task-123" })
 
         image_to_video.create(
           model: "gen4_turbo",
@@ -66,22 +72,21 @@ RSpec.describe RunwayML::ImageToVideo do
           duration: 5,
           public_figure_threshold: "low"
         )
+        expect(client).to have_been_called_with(method: :post, path: "image_to_video", params: expected_params)
       end
     end
 
     context "with valid veo3.1 parameters" do
       it "validates and posts with audio parameter" do
-        expect(client).to receive(:post).with(
-          "image_to_video",
-          {
-            model: "veo3.1",
-            promptImage: "https://example.com/image.jpg",
-            promptText: "A beautiful sunset",
-            ratio: "1280:720",
-            duration: 6,
-            audio: false
-          }
-        ).and_return({ "id" => "task-456" })
+        expected_params = {
+          model: "veo3.1",
+          promptImage: "https://example.com/image.jpg",
+          promptText: "A beautiful sunset",
+          ratio: "1280:720",
+          duration: 6,
+          audio: false
+        }
+        client.inject_response(:post, "image_to_video", params: expected_params, response: { "id" => "task-456" })
 
         image_to_video.create(
           model: "veo3.1",
@@ -91,21 +96,20 @@ RSpec.describe RunwayML::ImageToVideo do
           duration: 6,
           audio: false
         )
+        expect(client).to have_been_called_with(method: :post, path: "image_to_video", params: expected_params)
       end
     end
 
     context "with valid veo3 parameters" do
       it "validates and posts with exact duration" do
-        expect(client).to receive(:post).with(
-          "image_to_video",
-          {
-            model: "veo3",
-            promptImage: "https://example.com/image.jpg",
-            promptText: "A beautiful sunset",
-            ratio: "1280:720",
-            duration: 8
-          }
-        ).and_return({ "id" => "task-789" })
+        expected_params = {
+          model: "veo3",
+          promptImage: "https://example.com/image.jpg",
+          promptText: "A beautiful sunset",
+          ratio: "1280:720",
+          duration: 8
+        }
+        client.inject_response(:post, "image_to_video", params: expected_params, response: { "id" => "task-789" })
 
         image_to_video.create(
           model: "veo3",
@@ -114,6 +118,7 @@ RSpec.describe RunwayML::ImageToVideo do
           ratio: "1280:720",
           duration: 8
         )
+        expect(client).to have_been_called_with(method: :post, path: "image_to_video", params: expected_params)
       end
     end
 
@@ -204,12 +209,14 @@ RSpec.describe RunwayML::ImageToVideo do
 
     context "with prompt_image as array for gen4_turbo" do
       it "validates and posts with first position" do
-        expect(client).to receive(:post).with(
-          "image_to_video",
-          hash_including(
-            promptImage: [ { uri: "https://example.com/image.jpg", position: "first" } ]
-          )
-        ).and_return({ "id" => "task-abc" })
+        expected_params = {
+          model: "gen4_turbo",
+          promptImage: [ { uri: "https://example.com/image.jpg", position: "first" } ],
+          promptText: "A beautiful sunset",
+          ratio: "1280:720",
+          duration: 5
+        }
+        client.inject_response(:post, "image_to_video", params: expected_params, response: { "id" => "task-abc" })
 
         image_to_video.create(
           model: "gen4_turbo",
@@ -218,20 +225,23 @@ RSpec.describe RunwayML::ImageToVideo do
           ratio: "1280:720",
           duration: 5
         )
+        expect(client).to have_been_called_with(method: :post, path: "image_to_video", params: expected_params)
       end
     end
 
     context "with prompt_image as array with first and last for veo3.1" do
       it "validates and posts with both positions" do
-        expect(client).to receive(:post).with(
-          "image_to_video",
-          hash_including(
-            promptImage: [
-              { uri: "https://example.com/first.jpg", position: "first" },
-              { uri: "https://example.com/last.jpg", position: "last" }
-            ]
-          )
-        ).and_return({ "id" => "task-def" })
+        expected_params = {
+          model: "veo3.1",
+          promptImage: [
+            { uri: "https://example.com/first.jpg", position: "first" },
+            { uri: "https://example.com/last.jpg", position: "last" }
+          ],
+          promptText: "A beautiful sunset",
+          ratio: "1280:720",
+          duration: 6
+        }
+        client.inject_response(:post, "image_to_video", params: expected_params, response: { "id" => "task-def" })
 
         image_to_video.create(
           model: "veo3.1",
@@ -243,6 +253,7 @@ RSpec.describe RunwayML::ImageToVideo do
           ratio: "1280:720",
           duration: 6
         )
+        expect(client).to have_been_called_with(method: :post, path: "image_to_video", params: expected_params)
       end
     end
 

@@ -7,8 +7,17 @@ require_relative "runway_ml/client"
 require_relative "runway_ml/image_to_video"
 
 module RunwayML
+  class << self
+    attr_accessor :client_class
+    attr_accessor :test_client
+  end
+
+  self.client_class = Client
+
   def self.client(api_secret: ENV["RUNWAY_API_SECRET"])
-    Client.new(api_secret: api_secret)
+    return test_client if test_client
+
+    client_class.new(api_secret: api_secret)
   end
 
   def self.image_to_video(api_secret: ENV["RUNWAY_API_SECRET"], **params)
