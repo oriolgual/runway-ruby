@@ -10,6 +10,8 @@ require_relative "runway_ml/character_performance"
 require_relative "runway_ml/sound_effect"
 require_relative "runway_ml/speech_to_speech"
 require_relative "runway_ml/text_to_speech"
+require_relative "runway_ml/voice_dubbing"
+require_relative "runway_ml/voice_isolation"
 
 module RunwayML
   class << self
@@ -47,6 +49,14 @@ module RunwayML
 
   def self.text_to_speech(api_secret: ENV["RUNWAY_API_SECRET"], **params)
     TextToSpeech.new(client: client(api_secret: api_secret)).create(**params)
+  end
+
+  def self.voice_dubbing(api_secret: ENV["RUNWAY_API_SECRET"], **params)
+    VoiceDubbing.new(client: client(api_secret: api_secret)).create(**params)
+  end
+
+  def self.voice_isolation(api_secret: ENV["RUNWAY_API_SECRET"], **params)
+    VoiceIsolation.new(client: client(api_secret: api_secret)).create(**params)
   end
 
   def self.task_retrieve(id, api_secret: ENV["RUNWAY_API_SECRET"])
