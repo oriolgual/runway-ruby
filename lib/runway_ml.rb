@@ -7,6 +7,7 @@ require_relative "runway_ml/client"
 require_relative "runway_ml/image_to_video"
 require_relative "runway_ml/text_to_video"
 require_relative "runway_ml/character_performance"
+require_relative "runway_ml/sound_effect"
 
 module RunwayML
   class << self
@@ -32,6 +33,10 @@ module RunwayML
 
   def self.character_performance(api_secret: ENV["RUNWAY_API_SECRET"], **params)
     CharacterPerformance.new(client: client(api_secret: api_secret)).create(**params)
+  end
+
+  def self.sound_effect(api_secret: ENV["RUNWAY_API_SECRET"], **params)
+    SoundEffect.new(client: client(api_secret: api_secret)).create(**params)
   end
 
   def self.task_retrieve(id, api_secret: ENV["RUNWAY_API_SECRET"])
