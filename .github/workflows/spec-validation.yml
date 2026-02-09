@@ -1,0 +1,41 @@
+name: OpenAPI Contract Validation
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  contract-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Run contract tests
+        run: bundle exec rspec spec/runway_ml/openapi_contract_spec.rb -f progress
+
+      - name: Run full test suite
+        run: bundle exec rspec --fail-fast
+
+      - name: Comment on PR if tests fail
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ OpenAPI contract validation failed. Please review the test output above.'
+            })

@@ -313,5 +313,26 @@ module RunwayML
 
       attr_reader :video_uri_validator
     end
+
+    class UUIDValidator
+      # RFC 4122 UUID v4 pattern from OpenAPI spec
+      UUID_PATTERN = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$/
+
+      def validate(uuid, errors, field: :id)
+        if uuid.nil?
+          errors[field] = "cannot be nil"
+          return
+        end
+
+        unless uuid.is_a?(String)
+          errors[field] = "must be a string"
+          return
+        end
+
+        unless uuid.match?(UUID_PATTERN)
+          errors[field] = "must be a valid UUID (RFC 4122 v4)"
+        end
+      end
+    end
   end
 end

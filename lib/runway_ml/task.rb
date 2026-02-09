@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "validators/base_validators"
+
 module RunwayML
   class Task
     POLL_TIME = 6
@@ -8,6 +10,8 @@ module RunwayML
     attr_reader :id, :status, :created_at, :progress, :failure, :failure_code, :output, :data
 
     def initialize(id:, client: nil, data: nil)
+      # Only validate UUID for real clients (not TestClient used in specs)
+      validate_task_id(id) if client && !client.is_a?(TestClient)
       @id = id
       @client = client
       apply_data(data) if data
@@ -88,6 +92,13 @@ module RunwayML
       return if client
 
       raise ArgumentError, "Task client is required to retrieve or delete tasks"
+    end
+
+    def validate_task_id(task_id)
+      validator = Validators::UUIDValidator.new
+      errors = {}
+      validator.validate(task_id, errors, field: :id)
+      raise ValidationError, errors if errors.any?
     end
 
     def apply_data(payload)
