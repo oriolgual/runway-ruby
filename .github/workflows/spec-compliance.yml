@@ -1,0 +1,86 @@
+name: OpenAPI Spec Compliance
+
+on:
+  schedule:
+    # Run daily at 9 AM UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Run compliance check
+        id: compliance
+        run: |
+          output=$(bundle exec rake spec:coverage 2>&1)
+          echo "$output" >> $GITHUB_OUTPUT
+          
+          # Extract compliance rate
+          if echo "$output" | grep -q "100.0%"; then
+            echo "compliance_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "compliance_ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create issue if compliance dropped
+        if: steps.compliance.outputs.compliance_ok == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `${{ steps.compliance.outputs.compliance }}`;
+            const body = `## ⚠️ OpenAPI Spec Compliance Check Failed
+            
+            The SDK is no longer 100% compliant with the OpenAPI specification.
+            
+            \`\`\`
+            ${output}
+            \`\`\`
+            
+            **Action Required:** Review and fix the compliance issues above.`;
+            
+            // Check if an issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['spec-compliance']
+            });
+            
+            if (issues.data.length > 0) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: body
+              });
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'OpenAPI Spec Compliance Check Failed',
+                body: body,
+                labels: ['spec-compliance', 'bug']
+              });
+            }
+
+      - name: Report status
+        if: always()
+        run: |
+          if [ "${{ steps.compliance.outputs.compliance_ok }}" = "true" ]; then
+            echo "✅ Compliance check passed (100.0%)"
+            exit 0
+          else
+            echo "❌ Compliance check failed"
+            exit 1
+          fi

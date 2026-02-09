@@ -1,0 +1,102 @@
+name: OpenAPI Spec Update Alert
+
+on:
+  schedule:
+    # Run weekly on Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  check-spec-updates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Fetch latest OpenAPI spec and check for updates
+        id: check_spec
+        run: |
+          # Fetch the latest spec from RunwayML
+          LATEST_SPEC_URL="https://raw.githubusercontent.com/runwayml/openapi/main/openapi.json"
+
+          # Download the latest spec
+          curl -s "$LATEST_SPEC_URL" > /tmp/latest_spec.json
+
+          # Get current spec hash from Ruby code
+          CURRENT_HASH=$(grep "SPEC_HASH = " lib/runway_ml/openapi_spec_loader.rb | grep -o '"[^"]*"' | tr -d '"')
+
+          # Calculate new spec hash
+          NEW_HASH=$(sha256sum /tmp/latest_spec.json | awk '{print $1}')
+
+          echo "current_hash=$CURRENT_HASH" >> $GITHUB_OUTPUT
+          echo "new_hash=$NEW_HASH" >> $GITHUB_OUTPUT
+
+          if [ "$CURRENT_HASH" != "$NEW_HASH" ]; then
+            echo "spec_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "spec_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create alert issue if spec changed
+        if: steps.check_spec.outputs.spec_changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## 🔄 OpenAPI Spec Updated
+
+            The upstream RunwayML OpenAPI specification has been updated.
+
+            **Current Hash:** \`${{ steps.check_spec.outputs.current_hash }}\`
+            **Latest Hash:** \`${{ steps.check_spec.outputs.new_hash }}\`
+
+            **Action Required:**
+            1. Review the [latest OpenAPI spec](https://raw.githubusercontent.com/runwayml/openapi/main/openapi.json)
+            2. Identify what changed (new endpoints, parameters, models, etc.)
+            3. Update the SDK to match the spec
+            4. Update \`openapi_spec_loader.rb\` with the new spec hash
+            5. Run \`bundle exec rake spec:coverage\` to verify 100% compliance
+
+            See [OPENAPI_VALIDATION.md](https://github.com/${{ github.repository }}/blob/main/OPENAPI_VALIDATION.md) for validation details.`;
+
+            // Check if an update alert already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['spec-update']
+            });
+
+            if (issues.data.length > 0) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: body
+              });
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'OpenAPI Spec Updated - Action Required',
+                body: body,
+                labels: ['spec-update', 'enhancement']
+              });
+            }
+
+      - name: Report status
+        run: |
+          if [ "${{ steps.check_spec.outputs.spec_changed }}" = "true" ]; then
+            echo "⚠️ OpenAPI spec has been updated"
+            exit 0
+          else
+            echo "✅ OpenAPI spec is current"
+            exit 0
+          fi

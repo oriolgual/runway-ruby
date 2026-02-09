@@ -13,3 +13,7 @@ gem "rspec", "~> 3.0"
 gem "rubocop", "~> 1.21"
 
 gem "rubocop-rails-omakase", "~> 1.1"
+
+# OpenAPI spec validation (development only)
+gem "committee", "~> 5.0"
+gem "json-schema", "~> 2.8"
