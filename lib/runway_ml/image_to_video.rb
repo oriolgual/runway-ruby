@@ -2,6 +2,7 @@
 
 require_relative "errors"
 require_relative "image_processor"
+require_relative "media_processor"
 require_relative "validators/gen4_turbo_validator"
 require_relative "validators/veo3_validator"
 require_relative "validators/veo3_stable_validator"
@@ -15,7 +16,7 @@ module RunwayML
       @client = client
     end
 
-    def create(model:, prompt_image:, prompt_text:, ratio:, duration:, seed: nil, public_figure_threshold: nil, audio: nil)
+    def create(model:, prompt_image:, prompt_text:, ratio:, duration:, seed: nil, public_figure_threshold: nil, audio: nil, auto_upload: true)
       errors = {}
 
       # Validate model
@@ -24,10 +25,28 @@ module RunwayML
         raise ValidationError, errors
       end
 
+      # Process prompt_image with auto-upload support
+      processed_prompt_image = MediaProcessor.process(
+        prompt_image,
+        errors,
+        client: client,
+        auto_upload: auto_upload
+      )
+
+      # Process audio with auto-upload support if provided
+      processed_audio = if audio && audio != false
+        MediaProcessor.process(
+          audio,
+          errors,
+          client: client,
+          auto_upload: auto_upload
+        )
+      end
+
       # Delegate to model-specific validator
       validator = get_validator(model)
       result = validator.validate(
-        **build_validator_params(model, prompt_image, prompt_text, ratio, duration, seed, public_figure_threshold, audio)
+        **build_validator_params(model, processed_prompt_image, prompt_text, ratio, duration, seed, public_figure_threshold, processed_audio || audio)
       )
 
       errors = result[:errors]
@@ -35,7 +54,7 @@ module RunwayML
 
       raise ValidationError, errors unless errors.empty?
 
-      inputs = build_inputs(model, processed_prompt_image, prompt_text, ratio, duration, seed, public_figure_threshold, audio)
+      inputs = build_inputs(model, processed_prompt_image, prompt_text, ratio, duration, seed, public_figure_threshold, processed_audio || audio)
 
       response = client.post(
         "image_to_video",

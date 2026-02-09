@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "errors"
+require_relative "media_processor"
 require_relative "validators/speech_to_speech_validator"
 
 module RunwayML
@@ -20,7 +21,7 @@ module RunwayML
       @client = client
     end
 
-    def create(model:, media:, voice:, remove_background_noise: false)
+    def create(model:, media:, voice:, remove_background_noise: false, auto_upload: true)
       errors = {}
 
       unless VALID_MODELS.include?(model)
@@ -28,9 +29,12 @@ module RunwayML
         raise ValidationError, errors
       end
 
+      # Process media with auto-upload support
+      processed_media = process_media_with_upload(media, errors, auto_upload)
+
       validator = Validators::SpeechToSpeechValidator.new
       result = validator.validate(
-        media: media,
+        media: processed_media,
         voice: voice,
         remove_background_noise: remove_background_noise
       )
@@ -38,7 +42,7 @@ module RunwayML
       errors = result[:errors]
       raise ValidationError, errors unless errors.empty?
 
-      inputs = build_inputs(media, voice, remove_background_noise)
+      inputs = build_inputs(processed_media, voice, remove_background_noise)
 
       response = client.post(
         "speech_to_speech",
@@ -51,6 +55,29 @@ module RunwayML
     private
 
     attr_reader :client
+
+    def process_media_with_upload(media, errors, auto_upload)
+      return media unless media.is_a?(Hash)
+
+      media = media.dup
+      uri = media[:uri] || media["uri"]
+
+      # Process the URI with auto-upload
+      processed_uri = MediaProcessor.process(
+        uri,
+        errors,
+        client: client,
+        auto_upload: auto_upload
+      )
+
+      if media.key?(:uri)
+        media[:uri] = processed_uri
+      else
+        media["uri"] = processed_uri
+      end
+
+      media
+    end
 
     def build_inputs(media, voice, remove_background_noise)
       {

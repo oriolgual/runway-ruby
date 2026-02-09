@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "errors"
+require_relative "media_processor"
 require_relative "validators/text_veo3_validator"
 require_relative "validators/text_veo3_stable_validator"
 
@@ -12,7 +13,7 @@ module RunwayML
       @client = client
     end
 
-    def create(model:, prompt_text:, ratio:, duration:, audio: nil)
+    def create(model:, prompt_text:, ratio:, duration:, audio: nil, auto_upload: true)
       errors = {}
 
       unless VALID_MODELS.include?(model)
@@ -20,13 +21,23 @@ module RunwayML
         raise ValidationError, errors
       end
 
+      # Process audio with auto-upload support if provided
+      processed_audio = if audio && audio != false
+        MediaProcessor.process(
+          audio,
+          errors,
+          client: client,
+          auto_upload: auto_upload
+        )
+      end
+
       validator = get_validator(model)
-      result = validator.validate(**build_validator_params(model, prompt_text, ratio, duration, audio))
+      result = validator.validate(**build_validator_params(model, prompt_text, ratio, duration, processed_audio || audio))
 
       errors = result[:errors]
       raise ValidationError, errors unless errors.empty?
 
-      inputs = build_inputs(model, prompt_text, ratio, duration, audio)
+      inputs = build_inputs(model, prompt_text, ratio, duration, processed_audio || audio)
 
       response = client.post(
         "text_to_video",

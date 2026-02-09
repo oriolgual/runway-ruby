@@ -42,6 +42,7 @@ export RUNWAY_API_SECRET='your-api-key-here'
   - [Task Object](#task-object)
   - [Using Local Image Files](#using-local-image-files)
   - [Using File Objects or StringIO](#using-file-objects-or-stringio)
+  - [Automatic File Uploads](#automatic-file-uploads)
   - [Using Data URIs](#using-data-uris)
 - [Supported Models](#supported-models)
 - [Supported Image Formats](#supported-image-formats)
@@ -543,6 +544,115 @@ task = RunwayML.image_to_video(
   duration: 5
 )
 ```
+
+### Automatic File Uploads
+
+For generation methods that accept media parameters (audio, images, or videos), the SDK automatically uploads local files, File objects, and StringIO to Runway when you pass them as parameters. This happens transparently without requiring manual upload steps:
+
+**Supported for all media-accepting methods:**
+
+- Voice Dubbing, Voice Isolation, Speech-to-Speech
+- Image-to-Video, Text-to-Video, Character Performance
+- Any method that accepts `audio_uri` or media parameters
+
+```ruby
+require 'runway_ml'
+
+# Automatically uploads the local audio file internally
+task = RunwayML.voice_dubbing(
+  model: 'eleven_voice_dubbing',
+  audio_uri: 'path/to/audio.mp3',  # Local file - automatically uploaded!
+  target_lang: 'es'
+).wait_for_output
+
+# Works with File objects too
+File.open('audio.mp3', 'rb') do |file|
+  task = RunwayML.voice_isolation(
+    model: 'eleven_voice_isolation',
+    audio_uri: file  # Automatically uploaded!
+  ).wait_for_output
+end
+
+# And with StringIO
+require 'stringio'
+
+audio_data = StringIO.new(File.binread('audio.mp3'))
+task = RunwayML.speech_to_speech(
+  model: 'eleven_multilingual_sts_v2',
+  media: { type: 'audio', uri: audio_data },  # Automatically uploaded!
+  voice: { type: 'runway-preset', presetId: 'Noah' }
+).wait_for_output
+
+# Works with any supported file type (images, videos, audio)
+video_data = StringIO.new(File.binread('video.mp4'))
+task = RunwayML.speech_to_speech(
+  model: 'eleven_multilingual_sts_v2',
+  media: { type: 'video', uri: video_data },  # Also auto-uploaded!
+  voice: { type: 'runway-preset', presetId: 'Noah' }
+).wait_for_output
+
+# Image-to-Video with automatic image upload
+task = RunwayML.image_to_video(
+  model: 'gen4_turbo',
+  prompt_image: 'path/to/image.jpg',  # Local file - automatically uploaded!
+  prompt_text: 'A timelapse on a sunny day',
+  ratio: '1280:720',
+  duration: 5
+).wait_for_output
+
+# Image-to-Video with optional audio file
+task = RunwayML.image_to_video(
+  model: 'veo3.1',
+  prompt_image: 'path/to/image.jpg',
+  prompt_text: 'A walk through the forest',
+  ratio: '16:9',
+  duration: 10,
+  audio: 'path/to/music.mp3'  # Also automatically uploaded!
+).wait_for_output
+
+# Text-to-Video with automatic audio upload
+task = RunwayML.text_to_video(
+  model: 'veo3.1',
+  prompt_text: 'A cute bunny hopping in a meadow',
+  ratio: '1280:720',
+  duration: 8,
+  audio: 'path/to/background.wav'  # Automatically uploaded!
+).wait_for_output
+
+# Character Performance with automatic media upload
+task = RunwayML.character_performance(
+  model: 'act_two',
+  character: { type: 'image', uri: 'path/to/character.jpg' },  # Auto-uploaded!
+  reference: { type: 'video', uri: 'path/to/reference.mp4' },  # Auto-uploaded!
+  ratio: '1280:720'
+).wait_for_output
+```
+
+**Disabling Automatic Uploads:**
+
+If you want to disable automatic uploads and use local files as data URIs instead, pass `auto_upload: false`:
+
+```ruby
+# Convert to data URI instead of uploading
+task = RunwayML.voice_dubbing(
+  model: 'eleven_voice_dubbing',
+  audio_uri: 'path/to/audio.mp3',
+  target_lang: 'es',
+  auto_upload: false  # Uses data URI instead
+).wait_for_output
+
+# Also works for image/video methods
+task = RunwayML.image_to_video(
+  model: 'gen4_turbo',
+  prompt_image: 'path/to/image.jpg',
+  prompt_text: 'A timelapse',
+  ratio: '1280:720',
+  duration: 5,
+  auto_upload: false  # Uses data URI instead
+).wait_for_output
+```
+
+Note: Automatic uploads are enabled by default for all media parameters in Voice Dubbing, Voice Isolation, Speech-to-Speech, Image-to-Video, Text-to-Video, Character Performance, and related methods.
 
 ### Using Data URIs
 
