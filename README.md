@@ -37,6 +37,7 @@ export RUNWAY_API_SECRET='your-api-key-here'
   - [Text-to-Speech Generation](#text-to-speech-generation)
   - [Voice Dubbing](#voice-dubbing)
   - [Voice Isolation](#voice-isolation)
+  - [Uploading Media Files](#uploading-media-files)
   - [Task Object](#task-object)
   - [Using Local Image Files](#using-local-image-files)
   - [Using File Objects or StringIO](#using-file-objects-or-stringio)
@@ -365,6 +366,59 @@ task = RunwayML.voice_isolation(
 
 - `model` - Required. Must be `'eleven_voice_isolation'`
 - `audio_uri` - Required. HTTPS URL, Runway URI, or data URI containing the audio. Duration must be > 4.6 seconds and < 3600 seconds
+
+### Uploading Media Files
+
+Upload media files to RunwayML for use in generation requests. Uploaded files are temporary and will be automatically expired after a period of time:
+
+```ruby
+require 'runway_ml'
+
+# Upload a video file
+uploads = RunwayML.uploads
+runway_uri = uploads.create_ephemeral('path/to/video.mp4')
+
+puts "Upload successful!"
+puts "Runway URI: #{runway_uri}"
+# => Runway URI: runway://uploads/abc123...
+
+# Use the runway_uri in your generation requests
+task = RunwayML.image_to_video(
+  model: 'gen4_turbo',
+  prompt_image: runway_uri,
+  prompt_text: 'Add motion effects to the video',
+  ratio: '1280:720',
+  duration: 5
+).wait_for_output
+```
+
+You can also upload with a custom filename:
+
+```ruby
+# Upload with a custom filename
+runway_uri = uploads.create_ephemeral('path/to/video.mp4', filename: 'my-custom-video.mp4')
+```
+
+And upload from File objects or StringIO:
+
+```ruby
+# Upload from a File object
+File.open('video.mp4', 'rb') do |file|
+  runway_uri = uploads.create_ephemeral(file, filename: 'video.mp4')
+end
+
+# Upload from StringIO
+require 'stringio'
+
+video_data = StringIO.new(File.binread('video.mp4'))
+runway_uri = uploads.create_ephemeral(video_data, filename: 'video.mp4')
+```
+
+**Supported file types for uploads:**
+
+- **Images:** JPG, JPEG, PNG, WebP
+- **Videos:** MP4, MOV, MKV, WebM, 3GP, OGV, AVI, FLV, MPG, MPEG
+- **Audio:** MP3, WAV, FLAC, M4A, AAC, OGG, WebA
 
 ### Task Object
 
