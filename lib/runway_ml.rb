@@ -13,6 +13,7 @@ require_relative "runway_ml/text_to_speech"
 require_relative "runway_ml/voice_dubbing"
 require_relative "runway_ml/voice_isolation"
 require_relative "runway_ml/uploads"
+require_relative "runway_ml/organization"
 
 module RunwayML
   class << self
@@ -62,6 +63,10 @@ module RunwayML
 
   def self.uploads(api_secret: ENV["RUNWAY_API_SECRET"])
     Uploads.new(client: client(api_secret: api_secret))
+  end
+
+  def self.organization(api_secret: ENV["RUNWAY_API_SECRET"])
+    Organization.new(client: client(api_secret: api_secret))
   end
 
   def self.task_retrieve(id, api_secret: ENV["RUNWAY_API_SECRET"])

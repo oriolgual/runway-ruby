@@ -38,6 +38,7 @@ export RUNWAY_API_SECRET='your-api-key-here'
   - [Voice Dubbing](#voice-dubbing)
   - [Voice Isolation](#voice-isolation)
   - [Uploading Media Files](#uploading-media-files)
+  - [Organization Information](#organization-information)
   - [Task Object](#task-object)
   - [Using Local Image Files](#using-local-image-files)
   - [Using File Objects or StringIO](#using-file-objects-or-stringio)
@@ -419,6 +420,58 @@ runway_uri = uploads.create_ephemeral(video_data, filename: 'video.mp4')
 - **Images:** JPG, JPEG, PNG, WebP
 - **Videos:** MP4, MOV, MKV, WebM, 3GP, OGV, AVI, FLV, MPG, MPEG
 - **Audio:** MP3, WAV, FLAC, M4A, AAC, OGG, WebA
+
+### Organization Information
+
+Get information about your organization's usage and credit balance:
+
+```ruby
+require 'runway_ml'
+
+# Get organization details
+organization = RunwayML.organization
+info = organization.retrieve
+
+puts "Credit balance: #{info.credit_balance}"
+puts "Monthly spend limit: #{info.max_monthly_credit_spend}"
+puts "Tier: #{info.tier}"
+```
+
+Query usage data for your organization by model and day (up to 90 days of data):
+
+```ruby
+# Get usage data for the last 30 days
+usage = organization.usage
+
+# Access usage by model
+puts usage.models # => { "gen4_turbo" => [...], "veo3.1" => [...] }
+
+# Query specific date range
+usage = organization.usage(
+  start_date: '2026-01-01',
+  before_date: '2026-02-08'
+)
+
+puts usage.by_model # => { ... }
+puts usage.to_h     # => Returns full usage data as hash
+```
+
+**Organization Methods:**
+
+- `retrieve()` - Returns `OrganizationInfo` with tier, credit balance, and current usage
+  - `credit_balance` - Current credit balance for the organization
+  - `tier` - Tier information including max monthly credit spend
+  - `usage` - Current usage data broken down by models
+  - `max_monthly_credit_spend()` - Maximum monthly credits available for this tier
+  - `tier_models()` - Models included in this tier
+  - `usage_models()` - Current usage by model
+
+- `usage(start_date:, before_date:)` - Returns `UsageInfo` with usage breakdown
+  - `start_date` - Optional. ISO-8601 date (YYYY-MM-DD) for query start. Defaults to 30 days before current date
+  - `before_date` - Optional. ISO-8601 date (YYYY-MM-DD) for query end (not inclusive). Defaults to 30 days after start date
+  - `models()` - Returns usage data by model
+  - `by_model()` - Alias for models()
+  - `to_h()` - Returns full usage data as hash
 
 ### Task Object
 
