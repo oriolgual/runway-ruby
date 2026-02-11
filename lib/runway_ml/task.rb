@@ -7,11 +7,17 @@ module RunwayML
     POLL_TIME = 6
     POLL_JITTER = 3
 
-    attr_reader :id, :status, :created_at, :progress, :failure, :failure_code, :output, :data
+    attr_reader :id,
+                :status,
+                :created_at,
+                :progress,
+                :failure,
+                :failure_code,
+                :output,
+                :data
 
     def initialize(id:, client: nil, data: nil)
-      # Only validate UUID for real clients (not TestClient used in specs)
-      validate_task_id(id) if client && !client.is_a?(TestClient)
+      validate_task_id(id)
       @id = id
       @client = client
       apply_data(data) if data

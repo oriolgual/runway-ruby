@@ -9,6 +9,7 @@ RSpec.describe RunwayML::TextToSpeech do
   describe "#create" do
     context "with valid parameters" do
       it "validates and posts with all parameters" do
+        task_id = test_uuid
         expected_params = {
           model: "eleven_multilingual_v2",
           promptText: "The quick brown fox jumps over the lazy dog",
@@ -17,23 +18,36 @@ RSpec.describe RunwayML::TextToSpeech do
             presetId: "Leslie"
           }
         }
-        client.inject_response(:post, "text_to_speech", params: expected_params, response: { "id" => "task-tts-123" })
-
-        result = text_to_speech.create(
-          model: "eleven_multilingual_v2",
-          prompt_text: "The quick brown fox jumps over the lazy dog",
-          voice: {
-            type: "runway-preset",
-            presetId: "Leslie"
+        client.inject_response(
+          :post,
+          "text_to_speech",
+          params: expected_params,
+          response: {
+            "id" => task_id
           }
         )
 
+        result =
+          text_to_speech.create(
+            model: "eleven_multilingual_v2",
+            prompt_text: "The quick brown fox jumps over the lazy dog",
+            voice: {
+              type: "runway-preset",
+              presetId: "Leslie"
+            }
+          )
+
         expect(result).to be_a(RunwayML::Task)
-        expect(result.id).to eq("task-tts-123")
-        expect(client).to have_been_called_with(method: :post, path: "text_to_speech", params: expected_params)
+        expect(result.id).to eq(task_id)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "text_to_speech",
+          params: expected_params
+        )
       end
 
       it "accepts minimum length prompt text" do
+        task_id = test_uuid
         expected_params = {
           model: "eleven_multilingual_v2",
           promptText: "a",
@@ -42,21 +56,30 @@ RSpec.describe RunwayML::TextToSpeech do
             presetId: "Noah"
           }
         }
-        client.inject_response(:post, "text_to_speech", params: expected_params, response: { "id" => "task-tts-124" })
-
-        result = text_to_speech.create(
-          model: "eleven_multilingual_v2",
-          prompt_text: "a",
-          voice: {
-            type: "runway-preset",
-            presetId: "Noah"
+        client.inject_response(
+          :post,
+          "text_to_speech",
+          params: expected_params,
+          response: {
+            "id" => task_id
           }
         )
 
-        expect(result.id).to eq("task-tts-124")
+        result =
+          text_to_speech.create(
+            model: "eleven_multilingual_v2",
+            prompt_text: "a",
+            voice: {
+              type: "runway-preset",
+              presetId: "Noah"
+            }
+          )
+
+        expect(result.id).to eq(task_id)
       end
 
       it "accepts maximum length prompt text" do
+        task_id = test_uuid
         long_text = "a" * 1000
         expected_params = {
           model: "eleven_multilingual_v2",
@@ -66,18 +89,26 @@ RSpec.describe RunwayML::TextToSpeech do
             presetId: "Maya"
           }
         }
-        client.inject_response(:post, "text_to_speech", params: expected_params, response: { "id" => "task-tts-125" })
-
-        result = text_to_speech.create(
-          model: "eleven_multilingual_v2",
-          prompt_text: long_text,
-          voice: {
-            type: "runway-preset",
-            presetId: "Maya"
+        client.inject_response(
+          :post,
+          "text_to_speech",
+          params: expected_params,
+          response: {
+            "id" => task_id
           }
         )
 
-        expect(result.id).to eq("task-tts-125")
+        result =
+          text_to_speech.create(
+            model: "eleven_multilingual_v2",
+            prompt_text: long_text,
+            voice: {
+              type: "runway-preset",
+              presetId: "Maya"
+            }
+          )
+
+        expect(result.id).to eq(task_id)
       end
     end
 
@@ -87,7 +118,10 @@ RSpec.describe RunwayML::TextToSpeech do
           text_to_speech.create(
             model: "invalid_model",
             prompt_text: "Hello",
-            voice: { type: "runway-preset", presetId: "Leslie" }
+            voice: {
+              type: "runway-preset",
+              presetId: "Leslie"
+            }
           )
         }.to raise_error(RunwayML::ValidationError, /model/)
       end
@@ -99,7 +133,10 @@ RSpec.describe RunwayML::TextToSpeech do
           text_to_speech.create(
             model: "eleven_multilingual_v2",
             prompt_text: "",
-            voice: { type: "runway-preset", presetId: "Leslie" }
+            voice: {
+              type: "runway-preset",
+              presetId: "Leslie"
+            }
           )
         }.to raise_error(RunwayML::ValidationError, /prompt_text/)
       end
@@ -109,7 +146,10 @@ RSpec.describe RunwayML::TextToSpeech do
           text_to_speech.create(
             model: "eleven_multilingual_v2",
             prompt_text: nil,
-            voice: { type: "runway-preset", presetId: "Leslie" }
+            voice: {
+              type: "runway-preset",
+              presetId: "Leslie"
+            }
           )
         }.to raise_error(RunwayML::ValidationError, /prompt_text/)
       end
@@ -120,7 +160,10 @@ RSpec.describe RunwayML::TextToSpeech do
           text_to_speech.create(
             model: "eleven_multilingual_v2",
             prompt_text: long_text,
-            voice: { type: "runway-preset", presetId: "Leslie" }
+            voice: {
+              type: "runway-preset",
+              presetId: "Leslie"
+            }
           )
         }.to raise_error(RunwayML::ValidationError, /prompt_text/)
       end
@@ -142,7 +185,10 @@ RSpec.describe RunwayML::TextToSpeech do
           text_to_speech.create(
             model: "eleven_multilingual_v2",
             prompt_text: "Hello",
-            voice: { type: "invalid", presetId: "Leslie" }
+            voice: {
+              type: "invalid",
+              presetId: "Leslie"
+            }
           )
         }.to raise_error(RunwayML::ValidationError, /voice/)
       end
@@ -152,15 +198,69 @@ RSpec.describe RunwayML::TextToSpeech do
           text_to_speech.create(
             model: "eleven_multilingual_v2",
             prompt_text: "Hello",
-            voice: { type: "runway-preset", presetId: "InvalidVoice" }
+            voice: {
+              type: "runway-preset",
+              presetId: "InvalidVoice"
+            }
           )
         }.to raise_error(RunwayML::ValidationError, /voice/)
       end
     end
 
     context "with all valid preset IDs" do
-      %w[Maya Arjun Serene Bernard Billy Mark Clint Mabel Chad Leslie Eleanor Elias Elliot Grungle Brodie Sandra Kirk Kylie Lara Lisa Malachi Marlene Martin Miriam Monster Paula Pip Rusty Ragnar Xylar Maggie Jack Katie Noah James Rina Ella Mariah Frank Claudia Niki Vincent Kendrick Myrna Tom Wanda Benjamin Kiana Rachel].each do |preset_id|
+      %w[
+        Maya
+        Arjun
+        Serene
+        Bernard
+        Billy
+        Mark
+        Clint
+        Mabel
+        Chad
+        Leslie
+        Eleanor
+        Elias
+        Elliot
+        Grungle
+        Brodie
+        Sandra
+        Kirk
+        Kylie
+        Lara
+        Lisa
+        Malachi
+        Marlene
+        Martin
+        Miriam
+        Monster
+        Paula
+        Pip
+        Rusty
+        Ragnar
+        Xylar
+        Maggie
+        Jack
+        Katie
+        Noah
+        James
+        Rina
+        Ella
+        Mariah
+        Frank
+        Claudia
+        Niki
+        Vincent
+        Kendrick
+        Myrna
+        Tom
+        Wanda
+        Benjamin
+        Kiana
+        Rachel
+      ].each do |preset_id|
         it "accepts preset ID #{preset_id}" do
+          task_id = test_uuid
           expected_params = {
             model: "eleven_multilingual_v2",
             promptText: "Hello world",
@@ -169,15 +269,26 @@ RSpec.describe RunwayML::TextToSpeech do
               presetId: preset_id
             }
           }
-          client.inject_response(:post, "text_to_speech", params: expected_params, response: { "id" => "task-tts-preset" })
-
-          result = text_to_speech.create(
-            model: "eleven_multilingual_v2",
-            prompt_text: "Hello world",
-            voice: { type: "runway-preset", presetId: preset_id }
+          client.inject_response(
+            :post,
+            "text_to_speech",
+            params: expected_params,
+            response: {
+              "id" => task_id
+            }
           )
 
-          expect(result.id).to eq("task-tts-preset")
+          result =
+            text_to_speech.create(
+              model: "eleven_multilingual_v2",
+              prompt_text: "Hello world",
+              voice: {
+                type: "runway-preset",
+                presetId: preset_id
+              }
+            )
+
+          expect(result.id).to eq(task_id)
         end
       end
     end

@@ -22,6 +22,7 @@ RSpec.describe RunwayML do
 
   describe ".image_to_video" do
     it "creates a video task without instantiating a client" do
+      task_id = test_uuid
       client = RunwayML.test_client
       params = {
         model: "gen4_turbo",
@@ -30,23 +31,36 @@ RSpec.describe RunwayML do
         ratio: "1280:720",
         duration: 5
       }
-      client.inject_response(:post, "image_to_video", params: params, response: { "id" => "123" })
-
-      result = RunwayML.image_to_video(
-        api_secret: "test-key",
-        model: "gen4_turbo",
-        prompt_image: "https://example.com/image.jpg",
-        prompt_text: "A beautiful sunset",
-        ratio: "1280:720",
-        duration: 5
+      client.inject_response(
+        :post,
+        "image_to_video",
+        params: params,
+        response: {
+          "id" => task_id
+        }
       )
 
+      result =
+        RunwayML.image_to_video(
+          api_secret: "test-key",
+          model: "gen4_turbo",
+          prompt_image: "https://example.com/image.jpg",
+          prompt_text: "A beautiful sunset",
+          ratio: "1280:720",
+          duration: 5
+        )
+
       expect(result).to be_a(RunwayML::Task)
-      expect(result.id).to eq("123")
-      expect(client).to have_been_called_with(method: :post, path: "image_to_video", params: params)
+      expect(result.id).to eq(task_id)
+      expect(client).to have_been_called_with(
+        method: :post,
+        path: "image_to_video",
+        params: params
+      )
     end
 
     it "uses ENV['RUNWAY_API_SECRET'] by default" do
+      task_id = test_uuid
       ENV["RUNWAY_API_SECRET"] = "env-key"
       client = RunwayML.test_client
       params = {
@@ -56,19 +70,31 @@ RSpec.describe RunwayML do
         ratio: "1280:720",
         duration: 5
       }
-      client.inject_response(:post, "image_to_video", params: params, response: { "id" => "456" })
-
-      result = RunwayML.image_to_video(
-        model: "gen4_turbo",
-        prompt_image: "https://example.com/image.jpg",
-        prompt_text: "A beautiful sunset",
-        ratio: "1280:720",
-        duration: 5
+      client.inject_response(
+        :post,
+        "image_to_video",
+        params: params,
+        response: {
+          "id" => task_id
+        }
       )
 
+      result =
+        RunwayML.image_to_video(
+          model: "gen4_turbo",
+          prompt_image: "https://example.com/image.jpg",
+          prompt_text: "A beautiful sunset",
+          ratio: "1280:720",
+          duration: 5
+        )
+
       expect(result).to be_a(RunwayML::Task)
-      expect(result.id).to eq("456")
-      expect(client).to have_been_called_with(method: :post, path: "image_to_video", params: params)
+      expect(result.id).to eq(task_id)
+      expect(client).to have_been_called_with(
+        method: :post,
+        path: "image_to_video",
+        params: params
+      )
     ensure
       ENV.delete("RUNWAY_API_SECRET")
     end
@@ -76,6 +102,7 @@ RSpec.describe RunwayML do
 
   describe ".text_to_video" do
     it "creates a video task without instantiating a client" do
+      task_id = test_uuid
       client = RunwayML.test_client
       params = {
         model: "veo3.1",
@@ -84,23 +111,36 @@ RSpec.describe RunwayML do
         duration: 6,
         audio: true
       }
-      client.inject_response(:post, "text_to_video", params: params, response: { "id" => "789" })
-
-      result = RunwayML.text_to_video(
-        api_secret: "test-key",
-        model: "veo3.1",
-        prompt_text: "A beautiful sunset",
-        ratio: "1280:720",
-        duration: 6,
-        audio: true
+      client.inject_response(
+        :post,
+        "text_to_video",
+        params: params,
+        response: {
+          "id" => task_id
+        }
       )
 
+      result =
+        RunwayML.text_to_video(
+          api_secret: "test-key",
+          model: "veo3.1",
+          prompt_text: "A beautiful sunset",
+          ratio: "1280:720",
+          duration: 6,
+          audio: true
+        )
+
       expect(result).to be_a(RunwayML::Task)
-      expect(result.id).to eq("789")
-      expect(client).to have_been_called_with(method: :post, path: "text_to_video", params: params)
+      expect(result.id).to eq(task_id)
+      expect(client).to have_been_called_with(
+        method: :post,
+        path: "text_to_video",
+        params: params
+      )
     end
 
     it "uses ENV['RUNWAY_API_SECRET'] by default" do
+      task_id = test_uuid
       ENV["RUNWAY_API_SECRET"] = "env-key"
       client = RunwayML.test_client
       params = {
@@ -109,18 +149,30 @@ RSpec.describe RunwayML do
         ratio: "1280:720",
         duration: 8
       }
-      client.inject_response(:post, "text_to_video", params: params, response: { "id" => "790" })
-
-      result = RunwayML.text_to_video(
-        model: "veo3",
-        prompt_text: "A beautiful sunset",
-        ratio: "1280:720",
-        duration: 8
+      client.inject_response(
+        :post,
+        "text_to_video",
+        params: params,
+        response: {
+          "id" => task_id
+        }
       )
 
+      result =
+        RunwayML.text_to_video(
+          model: "veo3",
+          prompt_text: "A beautiful sunset",
+          ratio: "1280:720",
+          duration: 8
+        )
+
       expect(result).to be_a(RunwayML::Task)
-      expect(result.id).to eq("790")
-      expect(client).to have_been_called_with(method: :post, path: "text_to_video", params: params)
+      expect(result.id).to eq(task_id)
+      expect(client).to have_been_called_with(
+        method: :post,
+        path: "text_to_video",
+        params: params
+      )
     ensure
       ENV.delete("RUNWAY_API_SECRET")
     end

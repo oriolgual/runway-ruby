@@ -9,6 +9,7 @@ RSpec.describe RunwayML::VoiceDubbing do
   describe "#create" do
     context "with valid parameters" do
       it "validates and posts with all parameters" do
+        task_id = test_uuid
         expected_params = {
           model: "eleven_voice_dubbing",
           audioUri: "https://example.com/audio.mp3",
@@ -17,49 +18,82 @@ RSpec.describe RunwayML::VoiceDubbing do
           dropBackgroundAudio: true,
           numSpeakers: 2
         }
-        client.inject_response(:post, "voice_dubbing", params: expected_params, response: { "id" => "task-dubbing-123" })
-
-        result = voice_dubbing.create(
-          model: "eleven_voice_dubbing",
-          audio_uri: "https://example.com/audio.mp3",
-          target_lang: "es",
-          disable_voice_cloning: true,
-          drop_background_audio: true,
-          num_speakers: 2
+        client.inject_response(
+          :post,
+          "voice_dubbing",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
         )
 
+        result =
+          voice_dubbing.create(
+            model: "eleven_voice_dubbing",
+            audio_uri: "https://example.com/audio.mp3",
+            target_lang: "es",
+            disable_voice_cloning: true,
+            drop_background_audio: true,
+            num_speakers: 2
+          )
+
         expect(result).to be_a(RunwayML::Task)
-        expect(result.id).to eq("task-dubbing-123")
-        expect(client).to have_been_called_with(method: :post, path: "voice_dubbing", params: expected_params)
+        expect(result.id).to eq(task_id)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "voice_dubbing",
+          params: expected_params
+        )
       end
 
       it "omits optional parameters when not provided" do
+        task_id = test_uuid
         expected_params = {
           model: "eleven_voice_dubbing",
           audioUri: "https://example.com/audio.mp3",
           targetLang: "fr"
         }
-        client.inject_response(:post, "voice_dubbing", params: expected_params, response: { "id" => "task-dubbing-124" })
-
-        result = voice_dubbing.create(
-          model: "eleven_voice_dubbing",
-          audio_uri: "https://example.com/audio.mp3",
-          target_lang: "fr"
+        client.inject_response(
+          :post,
+          "voice_dubbing",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
         )
 
+        result =
+          voice_dubbing.create(
+            model: "eleven_voice_dubbing",
+            audio_uri: "https://example.com/audio.mp3",
+            target_lang: "fr"
+          )
+
         expect(result).to be_a(RunwayML::Task)
-        expect(result.id).to eq("task-dubbing-124")
-        expect(client).to have_been_called_with(method: :post, path: "voice_dubbing", params: expected_params)
+        expect(result.id).to eq(task_id)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "voice_dubbing",
+          params: expected_params
+        )
       end
 
       it "accepts all valid target languages" do
         RunwayML::VoiceDubbing::VALID_TARGET_LANGS.each do |lang|
+          task_id = test_uuid
           expected_params = {
             model: "eleven_voice_dubbing",
             audioUri: "https://example.com/audio.mp3",
             targetLang: lang
           }
-          client.inject_response(:post, "voice_dubbing", params: expected_params, response: { "id" => "task-dubbing-lang" })
+          client.inject_response(
+            :post,
+            "voice_dubbing",
+            params: expected_params,
+            response: {
+              "id" => task_id
+            }
+          )
 
           voice_dubbing.create(
             model: "eleven_voice_dubbing",
@@ -67,17 +101,29 @@ RSpec.describe RunwayML::VoiceDubbing do
             target_lang: lang
           )
 
-          expect(client).to have_been_called_with(method: :post, path: "voice_dubbing", params: expected_params)
+          expect(client).to have_been_called_with(
+            method: :post,
+            path: "voice_dubbing",
+            params: expected_params
+          )
         end
       end
 
       it "accepts runway URI" do
+        task_id = test_uuid
         expected_params = {
           model: "eleven_voice_dubbing",
           audioUri: "runway://audio123",
           targetLang: "de"
         }
-        client.inject_response(:post, "voice_dubbing", params: expected_params, response: { "id" => "task-dubbing-125" })
+        client.inject_response(
+          :post,
+          "voice_dubbing",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
+        )
 
         voice_dubbing.create(
           model: "eleven_voice_dubbing",
@@ -85,16 +131,28 @@ RSpec.describe RunwayML::VoiceDubbing do
           target_lang: "de"
         )
 
-        expect(client).to have_been_called_with(method: :post, path: "voice_dubbing", params: expected_params)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "voice_dubbing",
+          params: expected_params
+        )
       end
 
       it "accepts data URI" do
+        task_id = test_uuid
         expected_params = {
           model: "eleven_voice_dubbing",
           audioUri: "data:audio/mpeg;base64,abc123",
           targetLang: "ja"
         }
-        client.inject_response(:post, "voice_dubbing", params: expected_params, response: { "id" => "task-dubbing-126" })
+        client.inject_response(
+          :post,
+          "voice_dubbing",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
+        )
 
         voice_dubbing.create(
           model: "eleven_voice_dubbing",
@@ -102,7 +160,11 @@ RSpec.describe RunwayML::VoiceDubbing do
           target_lang: "ja"
         )
 
-        expect(client).to have_been_called_with(method: :post, path: "voice_dubbing", params: expected_params)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "voice_dubbing",
+          params: expected_params
+        )
       end
     end
 

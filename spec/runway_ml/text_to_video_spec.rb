@@ -9,6 +9,7 @@ RSpec.describe RunwayML::TextToVideo do
   describe "#create" do
     context "with valid veo3.1 parameters" do
       it "validates and posts with audio parameter" do
+        task_id = test_uuid
         expected_params = {
           model: "veo3.1",
           promptText: "A beautiful sunset",
@@ -16,29 +17,49 @@ RSpec.describe RunwayML::TextToVideo do
           duration: 6,
           audio: false
         }
-        client.inject_response(:post, "text_to_video", params: expected_params, response: { "id" => "task-123" })
-
-        result = text_to_video.create(
-          model: "veo3.1",
-          prompt_text: "A beautiful sunset",
-          ratio: "1280:720",
-          duration: 6,
-          audio: false
+        client.inject_response(
+          :post,
+          "text_to_video",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
         )
 
+        result =
+          text_to_video.create(
+            model: "veo3.1",
+            prompt_text: "A beautiful sunset",
+            ratio: "1280:720",
+            duration: 6,
+            audio: false
+          )
+
         expect(result).to be_a(RunwayML::Task)
-        expect(result.id).to eq("task-123")
-        expect(client).to have_been_called_with(method: :post, path: "text_to_video", params: expected_params)
+        expect(result.id).to eq(task_id)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "text_to_video",
+          params: expected_params
+        )
       end
 
       it "omits audio when not provided" do
+        task_id = test_uuid
         expected_params = {
           model: "veo3.1",
           promptText: "A beautiful sunset",
           ratio: "1280:720",
           duration: 6
         }
-        client.inject_response(:post, "text_to_video", params: expected_params, response: { "id" => "task-124" })
+        client.inject_response(
+          :post,
+          "text_to_video",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
+        )
 
         text_to_video.create(
           model: "veo3.1",
@@ -47,19 +68,31 @@ RSpec.describe RunwayML::TextToVideo do
           duration: 6
         )
 
-        expect(client).to have_been_called_with(method: :post, path: "text_to_video", params: expected_params)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "text_to_video",
+          params: expected_params
+        )
       end
     end
 
     context "with valid veo3 parameters" do
       it "validates and posts with exact duration" do
+        task_id = test_uuid
         expected_params = {
           model: "veo3",
           promptText: "A beautiful sunset",
           ratio: "1280:720",
           duration: 8
         }
-        client.inject_response(:post, "text_to_video", params: expected_params, response: { "id" => "task-456" })
+        client.inject_response(
+          :post,
+          "text_to_video",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
+        )
 
         text_to_video.create(
           model: "veo3",
@@ -68,7 +101,11 @@ RSpec.describe RunwayML::TextToVideo do
           duration: 8
         )
 
-        expect(client).to have_been_called_with(method: :post, path: "text_to_video", params: expected_params)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "text_to_video",
+          params: expected_params
+        )
       end
     end
 
@@ -107,7 +144,10 @@ RSpec.describe RunwayML::TextToVideo do
             ratio: "1280:720",
             duration: 6
           )
-        }.to raise_error(RunwayML::ValidationError, /duration.*must be exactly 8/)
+        }.to raise_error(
+          RunwayML::ValidationError,
+          /duration.*must be exactly 8/
+        )
       end
     end
 

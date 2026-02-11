@@ -2,7 +2,13 @@
 
 require "runway_ml"
 require "runway_ml/test_client"
+require "securerandom"
 require_relative "support/matchers/client_requests"
+
+# Helper method to generate valid UUIDs for tests
+def test_uuid
+  SecureRandom.uuid
+end
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

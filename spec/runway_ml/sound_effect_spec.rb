@@ -9,68 +9,114 @@ RSpec.describe RunwayML::SoundEffect do
   describe "#create" do
     context "with valid parameters" do
       it "validates and posts with all parameters" do
+        task_id = test_uuid
         expected_params = {
           model: "eleven_text_to_sound_v2",
           promptText: "A thunderstorm with heavy rain",
           duration: 10,
           loop: true
         }
-        client.inject_response(:post, "sound_effect", params: expected_params, response: { "id" => "task-sound-123" })
-
-        result = sound_effect.create(
-          model: "eleven_text_to_sound_v2",
-          prompt_text: "A thunderstorm with heavy rain",
-          duration: 10,
-          loop: true
+        client.inject_response(
+          :post,
+          "sound_effect",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
         )
 
+        result =
+          sound_effect.create(
+            model: "eleven_text_to_sound_v2",
+            prompt_text: "A thunderstorm with heavy rain",
+            duration: 10,
+            loop: true
+          )
+
         expect(result).to be_a(RunwayML::Task)
-        expect(result.id).to eq("task-sound-123")
-        expect(client).to have_been_called_with(method: :post, path: "sound_effect", params: expected_params)
+        expect(result.id).to eq(task_id)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "sound_effect",
+          params: expected_params
+        )
       end
 
       it "omits duration when not provided" do
+        task_id = test_uuid
         expected_params = {
           model: "eleven_text_to_sound_v2",
           promptText: "A thunderstorm with heavy rain",
           loop: false
         }
-        client.inject_response(:post, "sound_effect", params: expected_params, response: { "id" => "task-sound-124" })
-
-        result = sound_effect.create(
-          model: "eleven_text_to_sound_v2",
-          prompt_text: "A thunderstorm with heavy rain"
+        client.inject_response(
+          :post,
+          "sound_effect",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
         )
 
+        result =
+          sound_effect.create(
+            model: "eleven_text_to_sound_v2",
+            prompt_text: "A thunderstorm with heavy rain"
+          )
+
         expect(result).to be_a(RunwayML::Task)
-        expect(result.id).to eq("task-sound-124")
-        expect(client).to have_been_called_with(method: :post, path: "sound_effect", params: expected_params)
+        expect(result.id).to eq(task_id)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "sound_effect",
+          params: expected_params
+        )
       end
 
       it "uses loop default as false when not provided" do
+        task_id = test_uuid
         expected_params = {
           model: "eleven_text_to_sound_v2",
           promptText: "Ocean waves on a beach",
           loop: false
         }
-        client.inject_response(:post, "sound_effect", params: expected_params, response: { "id" => "task-sound-125" })
+        client.inject_response(
+          :post,
+          "sound_effect",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
+        )
 
         sound_effect.create(
           model: "eleven_text_to_sound_v2",
           prompt_text: "Ocean waves on a beach"
         )
 
-        expect(client).to have_been_called_with(method: :post, path: "sound_effect", params: expected_params)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "sound_effect",
+          params: expected_params
+        )
       end
 
       it "accepts minimum duration" do
+        task_id = test_uuid
         expected_params = {
           model: "eleven_text_to_sound_v2",
           promptText: "A beep sound",
           duration: 0.5,
           loop: false
         }
-        client.inject_response(:post, "sound_effect", params: expected_params, response: { "id" => "task-sound-126" })
+        client.inject_response(
+          :post,
+          "sound_effect",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
+        )
 
         sound_effect.create(
           model: "eleven_text_to_sound_v2",
@@ -78,17 +124,29 @@ RSpec.describe RunwayML::SoundEffect do
           duration: 0.5
         )
 
-        expect(client).to have_been_called_with(method: :post, path: "sound_effect", params: expected_params)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "sound_effect",
+          params: expected_params
+        )
       end
 
       it "accepts maximum duration" do
+        task_id = test_uuid
         expected_params = {
           model: "eleven_text_to_sound_v2",
           promptText: "A very long sound",
           duration: 30,
           loop: false
         }
-        client.inject_response(:post, "sound_effect", params: expected_params, response: { "id" => "task-sound-127" })
+        client.inject_response(
+          :post,
+          "sound_effect",
+          params: expected_params,
+          response: {
+            "id" => task_id
+          }
+        )
 
         sound_effect.create(
           model: "eleven_text_to_sound_v2",
@@ -96,7 +154,11 @@ RSpec.describe RunwayML::SoundEffect do
           duration: 30
         )
 
-        expect(client).to have_been_called_with(method: :post, path: "sound_effect", params: expected_params)
+        expect(client).to have_been_called_with(
+          method: :post,
+          path: "sound_effect",
+          params: expected_params
+        )
       end
     end
 
@@ -114,10 +176,7 @@ RSpec.describe RunwayML::SoundEffect do
     context "with invalid prompt_text" do
       it "raises ValidationError when prompt_text is empty" do
         expect {
-          sound_effect.create(
-            model: "eleven_text_to_sound_v2",
-            prompt_text: ""
-          )
+          sound_effect.create(model: "eleven_text_to_sound_v2", prompt_text: "")
         }.to raise_error(RunwayML::ValidationError, /prompt_text/)
       end
 
